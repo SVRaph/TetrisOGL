@@ -22,7 +22,7 @@ class Tetrominos
   inline void moveto(int x,int y){pos[0]=x;pos[1]=y;}
   inline void turn(int r){rot=(rot+r)%4;ref=4*type+rot;}
   void fall(Terrain* T);
-  friend bool isValidTT(Tetrominos*, Terrain*);
+  friend bool isValidPT(Tetrominos*, Terrain*);
   friend class Joueur;
 };
 
@@ -37,19 +37,20 @@ class Terrain
   void gldisplay();
   void addTetromino(Tetrominos*);
   int checkLines();// return the number of lines deleted
-  friend bool isValidTT(Tetrominos*, Terrain*);
+  friend bool isValidPT(Tetrominos*, Terrain*);
   friend class Joueur;
 };
 
 class Joueur
 {
  public:
-  Terrain* T; // TODO : terrain partagé...
+  Terrain* T;
   Tetrominos* P;
   int score;
-  Joueur(int,int);
+  Joueur();
+  void init(int,int);
   ~Joueur();
-  inline bool isValid(){return isValidTT(P,T);}
+  inline bool isValid(){return isValidPT(P,T);}
   void update();
   void newTetromino();
   void getKey(int key);
@@ -57,16 +58,15 @@ class Joueur
 
 class Tetris
 {
-  int nbj;
-  int jkeyboard;
+  int nbj,nbh;
   std::vector< Joueur > vJ;
-
  public:
-  Tetris(int w,int h,int n=1);
+  int fallMillis;
+  Tetris(int w,int h,int n);
   std::vector<float> winBounds();
   void gldisplay();
   void update();
-  inline void getKey(int key){vJ[jkeyboard].getKey(key);}
+  inline void keyboard(int key){if (nbh>0) vJ[0].getKey(key);}
 };
 
 

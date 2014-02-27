@@ -10,9 +10,8 @@
 #include "glFenetre.h"
 
 // Global variables
-Tetris GAME(12,16);
+Tetris GAME(12,16,1);
 glFenetre WIN; 
-const int fallMillis=500;
 
 // Callback handler for window re-paint event 
 void display() {
@@ -41,7 +40,7 @@ void displayTimer(int value) {
 }
 void gameTimer(int value) {
   GAME.update();
-  glutTimerFunc(fallMillis, gameTimer, 0);
+  glutTimerFunc(GAME.fallMillis, gameTimer, 0);
 }
 
  
@@ -67,7 +66,7 @@ void specialKeys(int key, int x, int y) {
     case GLUT_KEY_PAGE_DOWN:
       break;
     }
-  GAME.getKey(key);
+  GAME.keyboard(key);
 
 }
 

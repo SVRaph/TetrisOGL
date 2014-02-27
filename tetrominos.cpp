@@ -3,42 +3,21 @@
 #include "tetrominos.h"
 
 /*
+( 
     /x
    / 
   /______> y
   |
   |
   |z
+)
 
+  |y
+  |
+  |
+  |_____x
+  
 */
-
-
-
-void DrawCube5(float xPos,float yPos,uchar cR,uchar cG,uchar cB)
-{
-  // Dessine un cube
-  // en 2D
-
-  const float c=0.4f;// côté
- 
-  glPushMatrix();
-  glTranslatef(xPos,yPos,0.0f);
-  glColor3ub(cR,cG,cB); //couleur
-  glBegin(GL_QUADS);
-
-  glVertex2f(+c,+c);
-  glVertex2f(+c,-c);
-  glVertex2f(-c,-c);
-  glVertex2f(-c,+c);
-
-  glEnd();
-  glPopMatrix();
-}
-
-void DrawCube3(float xPos,float yPos,int iC)
-{
-  DrawCube5(xPos,yPos,COLOR[iC+0],COLOR[iC+1],COLOR[iC+2]);
-}
 
 
 Tetrominos::Tetrominos(int t,int px,int py)
@@ -59,19 +38,6 @@ void Tetrominos::fall(Terrain* T)
     move(0,-1);
   move(0,1);
 }
-
-void Tetrominos::gldisplay()
-{
-  for(int i=0;i<16;i++)
-    {
-      if (!fshape(i)) continue;
-      int xi=(i%4);
-      int yi=(i/4);
-      
-      DrawCube5(float(pos[0]+xi),float(pos[1]+yi),fcolor(0),fcolor(1),fcolor(2));
-    }
-}
-
 
 Terrain::Terrain(int largeur,int hauteur)
 {
@@ -98,20 +64,10 @@ void Terrain::addTetromino(Tetrominos* t)
     for(int i=0;i<16;i++)
     {
       if (!t->fshape(i)) continue;
-      int xi=(i%4);
-      int yi=(i/4);
-      v[t->pos[0]+xi][t->pos[1]+yi]=t->type+2;
+      int xi=(i%4)+t->pos[0];
+      int yi=(i/4)+t->pos[1];
+      v[xi][yi]=t->type+2;
     }
-}
-
-void Terrain::gldisplay()
-{
-  for(int xi=0;xi<size[0];xi++)
-    for(int yi=0;yi<size[1];yi++)
-      {
-	if (v[xi][yi]==0) continue;
-	DrawCube3((float)xi,(float)yi,3*v[xi][yi]);
-      }
 }
 
 int Terrain::checkLines()
@@ -143,7 +99,8 @@ int Terrain::checkLines()
 
 void Joueur::newTetromino()
 {
-  delete P;
+  assert(T!=NULL);
+  if (P!=NULL) delete P;
   int r=rand()%NBTETRO;
   P = new Tetrominos(r,T->size[0]/2-2,T->size[1]-4);
 }
@@ -185,23 +142,28 @@ void Joueur::update()
 bool isValidTT(Tetrominos* P,Terrain* T)
 {
   bool b=true;
+  int xi,yi;
   for(int i=0;(i<16 && b);i++)
     {
-      if (P->fshape(i)) continue;
-      int xi=(i%4)+P->pos[0];
-      int yi=(i/4)+P->pos[1];
+      if (!P->fshape(i)) continue;
+      xi=(i%4)+P->pos[0];
+      yi=(i/4)+P->pos[1];
       b = ( (xi>=0) && (yi >=0) && (xi<T->size[0]) && (yi<T->size[1]) && (T->v[xi][yi]==0) );
     }
   return b;
 }
 
 
-Joueur::Joueur(int w,int h)
+Joueur::Joueur()
+{
+  T=NULL;
+  P=NULL;
+  score=0;
+}
+void Joueur::init(int w,int h)
 {
   T=new Terrain(w,h);
-  P=new Tetrominos;
   newTetromino();
-  score=0;
 }
 Joueur::~Joueur()
 {
@@ -210,9 +172,14 @@ Joueur::~Joueur()
 }
 Tetris::Tetris(int w,int h,int n)
 {
+  fallMillis=500;
   nbj=n;
-  jkeyboard=0;
-  vJ.resize(nbj,Joueur(w,h));
+  nbh=n;
+  vJ.resize(nbj);
+  for(int j=0;j<n;j++)
+    {
+      vJ[j].init(w,h);
+    }
 }
 void Tetris::update()
 {
@@ -221,6 +188,19 @@ void Tetris::update()
       vJ[j].update();
     }
 }
+
+// ------------- //
+//   Affichage
+// ------------- //
+
+std::vector<float> Tetris::winBounds()
+{
+  std::vector<float> v(4,0.0);
+  v[1]=(float)vJ[0].T->size[0]*nbj;
+  v[3]=(float)vJ[0].T->size[1]*nbj;
+  return v;
+}
+
 void Tetris::gldisplay()
 {
   for(int j=0;j<nbj;j++)
@@ -229,10 +209,50 @@ void Tetris::gldisplay()
       vJ[j].T->gldisplay();
     }
 }
-std::vector<float> Tetris::winBounds()
+void Terrain::gldisplay()
 {
-  std::vector<float> v(4,0.0);
-  v[1]=(float)vJ[0].T->size[0]*nbj;
-  v[3]=(float)vJ[0].T->size[1]*nbj;
-  return v;
+  for(int xi=0;xi<size[0];xi++)
+    for(int yi=0;yi<size[1];yi++)
+      {
+	if (v[xi][yi]==0) continue;
+	DrawCube3((float)xi,(float)yi,3*v[xi][yi]);
+      }
+}
+
+void Tetrominos::gldisplay()
+{
+  for(int i=0;i<16;i++)
+    {
+      if (!fshape(i)) continue;
+      int xi=(i%4)+pos[0];
+      int yi=(i/4)+pos[1];
+      
+      DrawCube5(float(xi),float(yi),fcolor(0),fcolor(1),fcolor(2));
+    }
+}
+
+void DrawCube5(float xPos,float yPos,uchar cR,uchar cG,uchar cB)
+{
+  // Dessine un cube
+  // en 2D
+
+  const float c=0.4f;// côté
+ 
+  glPushMatrix();
+  glTranslatef(xPos,yPos,0.0f);
+  glColor3ub(cR,cG,cB); //couleur
+  glBegin(GL_QUADS);
+
+  glVertex2f(+c,+c);
+  glVertex2f(+c,-c);
+  glVertex2f(-c,-c);
+  glVertex2f(-c,+c);
+
+  glEnd();
+  glPopMatrix();
+}
+
+void DrawCube3(float xPos,float yPos,int iC)
+{
+  DrawCube5(xPos,yPos,COLOR[iC+0],COLOR[iC+1],COLOR[iC+2]);
 }

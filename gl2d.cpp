@@ -40,7 +40,11 @@ void displayTimer(int value) {
 }
 void gameTimer(int value) {
   GAME.update();
-  glutTimerFunc(GAME.fallMillis, gameTimer, 0);
+  glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+}
+void IATimer(int value) {
+  GAME.IAupdate();
+  glutTimerFunc(GAME.IAMillis(), IATimer, 0);
 }
 
  
@@ -90,6 +94,7 @@ int main(int argc, char** argv) {
 
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
   glutTimerFunc(0, gameTimer, 0);   // First timer call immediately
+  glutTimerFunc(0, IATimer, 0);
 
   glutMainLoop();               // Enter event-processing loop
   return 0;

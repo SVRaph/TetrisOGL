@@ -26,24 +26,23 @@ Tetrominos::Tetrominos(int t,int px,int py)
 
   type=t;
   rot=0;
-  ref=4*type+rot;
   pos.resize(3,0);
   pos[0]=px;
   pos[1]=py;
 }
 
-void Tetrominos::fall(Terrain* T)
+void Tetrominos::fall(const Terrain* T)
 {
-  while (isValidTT(this,T))
+  while (isValidPT(this,T))
     move(0,-1);
   move(0,1);
 }
+
 
 Terrain::Terrain(int largeur,int hauteur)
 {
   size[0]=largeur; //x
   size[1]=hauteur; //y
-
   v.resize(size[0],std::vector<uchar>(size[1],0));
 
   // Les bords
@@ -101,9 +100,21 @@ void Joueur::newTetromino()
 {
   assert(T!=NULL);
   if (P!=NULL) delete P;
+  if (Pnext != NULL) 
+    {
+      P=Pnext;
+    }
+  else
+    {
+      int r=rand()%NBTETRO;
+      P = new Tetrominos(r,T->size[0]/2-2,T->size[1]-4);
+    }
   int r=rand()%NBTETRO;
-  P = new Tetrominos(r,T->size[0]/2-2,T->size[1]-4);
+  Pnext = new Tetrominos(r,T->size[0]/2-2,T->size[1]-4);
 }
+
+
+
 
 void Joueur::getKey(int key)
 {
@@ -139,7 +150,7 @@ void Joueur::update()
     }
 }
 
-bool isValidTT(Tetrominos* P,Terrain* T)
+bool isValidPT(const Tetrominos* P,const Terrain* T)
 {
   bool b=true;
   int xi,yi;
@@ -158,6 +169,7 @@ Joueur::Joueur()
 {
   T=NULL;
   P=NULL;
+  Pnext=NULL;
   score=0;
 }
 void Joueur::init(int w,int h)
@@ -169,13 +181,19 @@ Joueur::~Joueur()
 {
   delete T;
   delete P;
+  delete Pnext;
 }
 Tetris::Tetris(int w,int h,int n)
 {
-  fallMillis=500;
+  level=1;
   nbj=n;
-  nbh=n;
+  nbh=0;
+  nbIA=1;
   vJ.resize(nbj);
+  for(int j=nbh;j<nbh+nbIA;j++)
+    {
+      vJ[j]=IA();
+    }
   for(int j=0;j<n;j++)
     {
       vJ[j].init(w,h);
@@ -188,6 +206,33 @@ void Tetris::update()
       vJ[j].update();
     }
 }
+void Tetris::IAupdate()
+{
+  for(int j=nbh;j<nbh+nbIA;j++)
+    {
+      vJ[j].moveIA();
+    }
+}
+
+
+void IA::newTetromino()
+{
+  Joueur::newTetromino();
+  std::cout<<"IA"<<std::endl;
+  //instructions(T,P->type,Pnext->type,xobj,robj);
+}
+
+void IA::moveIA()
+{
+  if (P->rot != robj) 
+    P->turn(+1);
+  else if (P->pos[0] < xobj)
+    P->move(+1,0);
+  else if (P->pos[0] > xobj)
+    P->move(-1,0);
+}
+
+
 
 // ------------- //
 //   Affichage
@@ -227,7 +272,7 @@ void Tetrominos::gldisplay()
       int xi=(i%4)+pos[0];
       int yi=(i/4)+pos[1];
       
-      DrawCube5(float(xi),float(yi),fcolor(0),fcolor(1),fcolor(2));
+      DrawCube5((float)xi,(float)yi,fcolor(0),fcolor(1),fcolor(2));
     }
 }
 
@@ -256,3 +301,4 @@ void DrawCube3(float xPos,float yPos,int iC)
 {
   DrawCube5(xPos,yPos,COLOR[iC+0],COLOR[iC+1],COLOR[iC+2]);
 }
+

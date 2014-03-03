@@ -1,13 +1,6 @@
 #pragma once
 
-#include "constants.h"
-
-const float INF=10000.0f;
-//rien, puits, nbre_trous, hauteur_pond, prof_trous
-const float STRAT[5]={0.0f,3.32657f,4.95295f,0.597845f,0.12753f};
-
-
-inline float calcul_poly(const float s[5],float x1,float x2,float x3,float x4){ return (s[1]*x1+s[2]*x2+s[3]*x3+s[4]*x4);}
+#include "constants.hpp"
 
 
 /*
@@ -34,8 +27,6 @@ public:
 };
 
 
-
-
 class Grille: public Terrain<uchar>
 {
 public:
@@ -53,7 +44,19 @@ class GrilleIA: public Terrain<bool>
 
 public:
   GrilleIA(int l=0,int h=0): Terrain<bool>(l,h){}
-  GrilleIA(const Grille* G=NULL): Terrain<bool>(){}
+  GrilleIA(const Grille* G=NULL): Terrain<bool>()
+  {
+    if (G != NULL)
+      {
+	sx=G->sx;
+	sy=G->sy;
+	v.resize(sx,std::vector<bool>(sy,false));
+	for(int x=0;x<sx;x++)
+	  for(int y=0;y<sy;y++)
+	      if (G->v[x][y]!=0) 
+		v[x][y]=true;		 
+      }
+  }
   float score() const;
 };
 

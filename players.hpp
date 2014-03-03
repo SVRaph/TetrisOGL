@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "constants.h"
+#include "constants.hpp"
 #include "tetrominos.hpp"
 #include "terrain.hpp"
 
@@ -46,13 +46,14 @@ class Joueur
   Tetrominos* P;
   Tetrominos* Pnext;
   int score;
+  int level;
 
   Joueur();
   void init(int,int);
   ~Joueur();
-  void update();
+  void update(int&);
   void getKey(int key);
-  virtual void moveIA(){};
+  virtual void moveIA(){std::cout<<"oups"<<std::endl;};
   virtual void newTetromino();
 
   bool fisValid(){return isValid(P,T);}
@@ -75,13 +76,14 @@ public:
 class Tetris
 {
   int nbj,nbh,nbIA;
+  int sx,sy;
   int level;
   std::vector< Joueur* > vJ;
  public:
-  int IAMillis(){return 210-10*level;}
+  int IAMillis(){return 250-10*level;}
   int fallMillis(){return 530-50*level;}
 
-  Tetris(int w,int h,int n);
+  Tetris(int w,int h,int n=1,int lv=1);
   ~Tetris();
   std::vector<float> winBounds();
   void gldisplay();
@@ -92,20 +94,12 @@ class Tetris
 
 
 
-// place la pièce
-template<typename I>
-void setPositionIA(Tetrominos* P, const Terrain<I>* T,int x,int s);
 // renvoie le meilleur score possible
 float simulation(const GrilleIA& g,int type);
 // renvoie le meilleur score possible et les instructions
 float instructions(const Grille* pT,int type1,int type2,int& xmin,int& rmin);
 
-
-
-
-
-
-
+// place la pièce
 template<typename I>
 void setPositionIA(Tetrominos* P, const Terrain<I>* T,int x,int s)
 {

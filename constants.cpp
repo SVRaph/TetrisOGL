@@ -1,5 +1,6 @@
-#include "constants.h"
+#include "constants.hpp"
 
+#include <GL/glut.h>  // GLUT, include glu.h and gl.h
 
 void DrawCube5(float xPos,float yPos,uchar cR,uchar cG,uchar cB)
 {

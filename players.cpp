@@ -1,5 +1,5 @@
 #include "players.hpp"
-
+#include <GL/glut.h>  // GLUT, include glu.h and gl.h
 
 Joueur::Joueur()
 {
@@ -58,9 +58,9 @@ void Joueur::getKey(int key)
 }
 
 
-void Joueur::update()
+void Joueur::update(int& nbl)
 {
-  int nbl=0;
+  nbl=0;
   if (!move(0,-1))
     {
       fapply(nbl);
@@ -98,26 +98,29 @@ void Joueur::fall()
 void IA::newTetromino()
 {
   Joueur::newTetromino();
-  std::cout<<"IA"<<std::endl;
-  //instructions(T,P->type,Pnext->type,xobj,robj);
+  instructions(T,P->type,Pnext->type,xobj,robj);
 }
 
 void IA::moveIA()
 {
   if (P->rot != robj) 
-    P->turn(+1);
+    turn(+1);
   else if (P->pos[0] < xobj)
-    P->move(+1,0);
+    move(+1,0);
   else if (P->pos[0] > xobj)
-    P->move(-1,0);
+    move(-1,0);
+  else if (level>5)
+    fall();
 }
 
 
-Tetris::Tetris(int w,int h,int n)
+Tetris::Tetris(int w,int h,int n,int lv)
 {
-  level=1;
+  sx=w;
+  sy=h;
+  level=lv;
   nbj=n;
-  nbh=std::max(1,n);
+  nbh=std::min(1,n);
   nbIA=nbj-nbh;
   vJ.resize(nbj,NULL);
   for(int j=0;j<nbh;j++)
@@ -129,6 +132,7 @@ Tetris::Tetris(int w,int h,int n)
     {
       vJ[j]= new IA;
       vJ[j]->init(w,h);
+      vJ[j]->level=level;
     }
 }
 Tetris::~Tetris()
@@ -140,9 +144,24 @@ Tetris::~Tetris()
 }
 void Tetris::update()
 {
+  int nbl;
+  bool disp_scores=false;
   for(int j=0;j<nbj;j++)
     {
-      vJ[j]->update();
+      vJ[j]->update(nbl);
+      assert(nbl<5);
+      if (nbl>0)
+	{
+	  vJ[j]->score+=SCORE[nbl];
+	  disp_scores=true;
+	}
+    }
+  if (disp_scores)
+    {
+      std::cout<<"scores :";
+      for(int j=0;j<nbj;j++)
+	std::cout<<vJ[j]->score<<" ";
+      std::cout<<std::endl;
     }
 }
 void Tetris::IAupdate()
@@ -162,18 +181,21 @@ void Tetris::IAupdate()
 std::vector<float> Tetris::winBounds()
 {
   std::vector<float> v(4,0.0);
-  v[1]=(float)vJ[0]->T->sx*nbj;
-  v[3]=(float)vJ[0]->T->sy*nbj;
+  v[1]=(float)(sx*nbj);
+  v[3]=(float)sy;
   return v;
 }
 
 void Tetris::gldisplay()
 {
+  glPushMatrix();
   for(int j=0;j<nbj;j++)
     {
+      if (j>0) glTranslatef((float)sx,0.0f,0.0f);
       vJ[j]->P->gldisplay();
       vJ[j]->T->gldisplay();
     }
+  glPopMatrix();
 }
 
 
@@ -229,9 +251,7 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 	// on l'ajoute à la grille
 	modif = apply(&P,&G,nbl);
 	if (!modif) continue; // ça bloque
-	
 	m=simulation(G,type2);
-	
 	if (m<min) 
 	  {
 	    min=m;

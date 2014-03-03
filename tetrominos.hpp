@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "constants.h"
+#include "constants.hpp"
 
 class Tetrominos
 {
@@ -21,6 +21,3 @@ class Tetrominos
   void gldisplay();
 };
 
-
-void DrawCube5(float,float,uchar,uchar,uchar);
-void DrawCube3(float,float,int);

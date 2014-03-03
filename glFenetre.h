@@ -33,7 +33,7 @@ public:
     windowPosX   = 50; 
     windowPosY   = 50;  
 
-    fullScreenMode = true;
+    fullScreenMode = false;
     refreshMillis = 30;  
 
     std::vector<float> s(4,0.0);

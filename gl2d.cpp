@@ -6,8 +6,8 @@
 #include <cmath>     // Needed for sin, cos
 #include <iostream>
  
-#include "tetrominos.h"
 #include "glFenetre.h"
+#include "players.hpp"
 
 // Global variables
 Tetris GAME(12,16,1);

@@ -3,10 +3,15 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include <GL/glut.h>  // GLUT, include glu.h and gl.h
 
 #define PI 3.14159265f
 
 typedef unsigned char uchar; // int between 0 and 255
+
+
+void DrawCube5(float,float,uchar,uchar,uchar);
+void DrawCube3(float,float,int);
 
 
 const int NBTETRO=7;
@@ -175,4 +180,3 @@ const bool VSHAPE[16*4*NBTETRO]=
     0,0,0,0
   };
 
-  

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "constants.h"
-#include "tetrominos.h"
 
 const float INF=10000.0f;
 //rien, puits, nbre_trous, hauteur_pond, prof_trous
@@ -27,19 +26,20 @@ class Terrain
 public:
   std::vector< std::vector<T> > v;
   int sx,sy;
-  int checkLines();// return the number of lines deleted
+
+  // return the number of lines deleted
+  int checkLines();
  public:
-  Terrain(int,int);
-  
-  //renvoie si ça a réussi, met à jour le terrain si possible
-  bool isValid(const Tetrominos& P) const;
-  bool apply(const Tetrominos& P,int& nbl);
+  Terrain(int l=0,int h=0);
 };
+
+
 
 
 class Grille: public Terrain<uchar>
 {
 public:
+  Grille(int l=0,int h=0): Terrain<uchar>(l,h){}
   void gldisplay();
 };
 
@@ -52,13 +52,55 @@ class GrilleIA: public Terrain<bool>
   int prof_trous() const; 
 
 public:
-  GrilleIA(const Grille* G=NULL);
+  GrilleIA(int l=0,int h=0): Terrain<bool>(l,h){}
+  GrilleIA(const Grille* G=NULL): Terrain<bool>(){}
   float score() const;
-  void setPositionIA(Tetrominos& P,int x,int s) const;  
 };
 
 
-// renvoie le meilleur score possible
-float simulation(const GrilleIA& g,int type);
-// renvoie le meilleur score possible et les instructions
-float instructions(const Terrain* pT,int type1,int type2,int& xmin,int& rmin);
+
+template<typename T>
+Terrain<T>::Terrain(int largeur,int hauteur)
+{
+  sx=largeur; //x
+  sy=hauteur; //y
+  v.resize(sx,std::vector<T>( sy,(T)0 ));
+
+  // Les bords
+  for(int xi=0;xi<sx;xi++)
+    {
+      v[xi][0]=(T)1;
+    }
+  for(int yi=0;yi<sy;yi++)
+    {
+      v[0][yi]=(T)1;
+      v[sx-1][yi]=(T)1;
+    }
+}
+
+template<typename T>
+int Terrain<T>::checkLines()
+{
+  int n=0;
+  bool b;
+
+  // pour chaque ligne
+  for(int yi=sx-1;yi>0;yi--)
+    {
+      b=true;
+      for(int xi=1;(b && xi<sx-1);xi++)
+	b=(v[xi][yi]!=(T)0);
+      // si ligne pleine on supprime en remontant
+      if (b)
+	{
+	  n++;
+	  for(int xj=1;xj<sx-1;xj++)
+	    {
+	      for(int yj=yi;yj<sy-1;yj++)
+		v[xj][yj]=v[xj][yj+1];
+	      v[xj][sy-1]=(T)0;
+	    }
+	}
+    }
+  return n;
+}

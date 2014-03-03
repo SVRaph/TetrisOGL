@@ -15,10 +15,10 @@ class Tetrominos
   inline bool  fshape(int i)const {return VSHAPE[16*fref()+i];}
   inline uchar fcolor(int i=0)const {return COLOR[3*(type+2)+i];}
   inline int fref()const {return 4*type+rot;}
-  void gldisplay();
   inline void move(int x,int y){pos[0]+=x;pos[1]+=y;}
   inline void turn(int r){rot=(rot+r)%4;}
-  void fall(const Terrain* T);
+
+  void gldisplay();
 };
 
 

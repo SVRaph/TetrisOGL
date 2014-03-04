@@ -32,6 +32,7 @@ class Grille: public Terrain<uchar>
 public:
   Grille(int l=0,int h=0): Terrain<uchar>(l,h){}
   void gldisplay();
+  void addLines(int n0,int k=1);
 };
 
 

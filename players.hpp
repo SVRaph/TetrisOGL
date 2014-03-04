@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+#include <ctime>
 
 #include "constants.hpp"
 #include "tetrominos.hpp"
@@ -51,7 +53,7 @@ class Joueur
   Joueur();
   void init(int,int);
   ~Joueur();
-  void update(int&);
+  void update(int&,bool&);
   void getKey(int key);
   virtual void moveIA(){std::cout<<"oups"<<std::endl;};
   virtual void newTetromino();

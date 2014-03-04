@@ -12,6 +12,26 @@ void Grille::gldisplay()
       }
 }
 
+void Grille::addLines(int n0,int k)
+{
+  // n0 = nombre de trous par ligne (en moy)
+  // k  = nombre de lignes
+  for(int x=1;x<sx-1;x++)
+    {
+      for(int y=sy-1;y>k;y--)
+	v[x][y]=v[x][y-k];
+      for(int y=k;y>0;y--)
+	{
+	  int r0=rand()%(sx-2);
+	  int r1=rand()%NBTETRO;
+	  if (r0<n0)
+	    v[x][1]=0;
+	  else
+	    v[x][1]=r1;
+	}
+    }
+}
+
 
 // ----------------------
 //        IA

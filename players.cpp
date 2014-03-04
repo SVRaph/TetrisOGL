@@ -58,11 +58,13 @@ void Joueur::getKey(int key)
 }
 
 
-void Joueur::update(int& nbl)
+void Joueur::update(int& nbl,bool& go)
 {
   nbl=0;
+  go=false;
   if (!move(0,-1))
     {
+      go=(P->pos[1]>=sy-4)
       fapply(nbl);
       newTetromino();
     }
@@ -145,15 +147,20 @@ Tetris::~Tetris()
 void Tetris::update()
 {
   int nbl;
+  bool gameover=false;
   bool disp_scores=false;
   for(int j=0;j<nbj;j++)
     {
-      vJ[j]->update(nbl);
+      vJ[j]->update(nbl,gameover);
       assert(nbl<5);
       if (nbl>0)
 	{
 	  vJ[j]->score+=SCORE[nbl];
 	  disp_scores=true;
+	}
+      if(gameover)
+	{
+	  std::cout<<"Partie terminée"<<std::endl;
 	}
     }
   if (disp_scores)

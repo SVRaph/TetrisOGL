@@ -39,9 +39,11 @@ void gameTimer(int value) {
   GAME.update();
   glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
 }
-void IATimer(int value) {
-  GAME.IAupdate();
-  glutTimerFunc(GAME.IAMillis(), IATimer, 0);
+void moveTimer(int value) {
+  static int k=0;
+  k=(k+1)%10;
+  GAME.command((k==0));
+  glutTimerFunc(GAME.moveMillis(), moveTimer, 0);
 }
 
  
@@ -67,9 +69,12 @@ void specialKeys(int key, int x, int y) {
     case GLUT_KEY_PAGE_DOWN:
       break;
     }
-  GAME.keyboard(key);
-
+  GAME.keyboard(key,true);
 }
+void specialUpKeys(int key,int x,int y){
+  GAME.keyboard(key,false);
+}
+
 
 
 /* Main function: GLUT runs as a console application starting at main() */
@@ -82,16 +87,19 @@ int main(int argc, char** argv) {
   glutInitWindowSize(WIN.width, WIN.height);  // Initial window width and height
   glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY); // Initial window top-left corner
   glutCreateWindow(WIN.title);      // Create window with given title
-  if (WIN.fullScreenMode) glutFullScreen();             // Put into full screen
+  if (WIN.fullScreenMode) glutFullScreen();  // Put into full screen
 
-  glutDisplayFunc(display);     // Register callback handler for window re-paint
-  glutReshapeFunc(reshape);     // Register callback handler for window re-shape
-  glutSpecialFunc(specialKeys); // Register callback handler for special-key event
-  glutKeyboardFunc(keyboard);   // Register callback handler for special-key event
+ // Register callback handler for...
+  glutDisplayFunc(display);     // ... window re-paint
+  glutReshapeFunc(reshape);     // ... window re-shape
+  glutSpecialFunc(specialKeys); // ... special-key event
+  glutSpecialUpFunc(specialUpKeys); // ... special-key release event
+  glutKeyboardFunc(keyboard);   // ... key event
 
-  glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
-  glutTimerFunc(0, gameTimer, 0);   // First timer call immediately
-  glutTimerFunc(0, IATimer, 0);
+  // Timer :  First timer call immediately
+  glutTimerFunc(0, displayTimer, 0);
+  glutTimerFunc(0, gameTimer, 0);
+  glutTimerFunc(0, moveTimer, 0);
 
   glutMainLoop();               // Enter event-processing loop
   return 0;

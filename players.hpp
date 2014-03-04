@@ -8,6 +8,16 @@
 #include "terrain.hpp"
 
 
+#include <GL/glut.h>
+
+const int KEYS[4]=
+  {
+    GLUT_KEY_RIGHT,
+    GLUT_KEY_LEFT,
+    GLUT_KEY_UP,
+    GLUT_KEY_DOWN
+  };
+
 //renvoie si le terrain a pu être modifié
 template<typename I>
 bool isValid(const Tetrominos* P,const Terrain<I>* T)
@@ -48,14 +58,13 @@ class Joueur
   Tetrominos* P;
   Tetrominos* Pnext;
   int score;
-  int level;
 
   Joueur();
   void init(int,int);
   ~Joueur();
   void update(int&,bool&);
-  void getKey(int key);
-  virtual void moveIA(){std::cout<<"oups"<<std::endl;};
+  virtual void getKey(int key,bool down){}
+  virtual void command(){std::cout<<"oups"<<std::endl;}
   virtual void newTetromino();
 
   bool fisValid(){return isValid(P,T);}
@@ -65,12 +74,25 @@ class Joueur
   void fall();
 };
 
+class Human : public Joueur
+{
+  int keyconf[4];
+  bool keypressed[4];
+public:
+  Human(): Joueur();
+  virtual void getKey(int key,bool down);
+  virtual void command();
+};
+
+
 class IA : public Joueur
 {
   int xobj;
   int robj;
+  int level;
 public:
-  virtual void moveIA();
+  IA(): Joueur(), level(1){}
+  virtual void command();
   virtual void newTetromino();
 };
 
@@ -82,7 +104,7 @@ class Tetris
   int level;
   std::vector< Joueur* > vJ;
  public:
-  int IAMillis(){return 250-10*level;}
+  int moveMillis(){return std::max(0,20-1*level);}
   int fallMillis(){return 530-50*level;}
 
   Tetris(int w,int h,int n=1,int lv=1);
@@ -90,8 +112,8 @@ class Tetris
   std::vector<float> winBounds();
   void gldisplay();
   void update();
-  void IAupdate();
-  inline void keyboard(int key){if (nbh>0) vJ[0]->getKey(key);}
+  void command(bool ia);
+  void keyboard(int key,bool down){if (nbh>0) vJ[0]->getKey(key,down);}
 };
 
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstdlib>
-#include <ctime>
-
 #include "constants.hpp"
 
 class Tetrominos

@@ -38,33 +38,13 @@ void Joueur::newTetromino()
 }
 
 
-
-void Joueur::getKey(int key)
-{
-  switch (key) {
-  case GLUT_KEY_RIGHT:
-    move(+1,0);
-    break;
-  case GLUT_KEY_LEFT: 
-    move(-1,0);
-    break;
-  case GLUT_KEY_UP:  
-    turn(1);
-    break;
-  case GLUT_KEY_DOWN: 
-    fall();
-    break;
-  }
-}
-
-
-void Joueur::update(int& nbl,bool& go)
+void Joueur::update(int& nbl,bool& gover)
 {
   nbl=0;
-  go=false;
+  gover=false;
   if (!move(0,-1))
     {
-      go=(P->pos[1]>=sy-4)
+      gover=(P->pos[1]>=sy-4)
       fapply(nbl);
       newTetromino();
     }
@@ -97,13 +77,47 @@ void Joueur::fall()
 }
 
 
+// --- Human --- //
+
+Human::Human()
+{
+  for(int i=0;i<4;i++)
+    {
+      keyconf[i]=KEYS[i];
+      keypressed[i]=false;    
+    }
+}
+
+void Human::getKey(int key,bool down)
+{
+  for(int i=0;i<4;i++)
+    {
+      if (key==keyconf[i])
+	keypressed=down;
+    }
+  this->command();
+}
+void Human::command()
+{
+  if (keypressed[0])
+    move(+1,0);
+  if (keypressed[1]) 
+    move(-1,0);
+  if (keypressed[2])  
+    turn(+1);
+  if (keypressed[3]) 
+    fall();
+}
+
+// --- IA --- //
+
 void IA::newTetromino()
 {
   Joueur::newTetromino();
   instructions(T,P->type,Pnext->type,xobj,robj);
 }
 
-void IA::moveIA()
+void IA::command()
 {
   if (P->rot != robj) 
     turn(+1);
@@ -115,6 +129,7 @@ void IA::moveIA()
     fall();
 }
 
+// --- Tetris --- // 
 
 Tetris::Tetris(int w,int h,int n,int lv)
 {
@@ -171,11 +186,12 @@ void Tetris::update()
       std::cout<<std::endl;
     }
 }
-void Tetris::IAupdate()
+void Tetris::command(bool ia)
 {
-  for(int j=nbh;j<nbh+nbIA;j++)
+  int nc=nbh+(ia?nbIA:0);
+  for(int j=0;j<nc;j++)
     {
-      vJ[j]->moveIA();
+      vJ[j]->command();
     }
 }
 

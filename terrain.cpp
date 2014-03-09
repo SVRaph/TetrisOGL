@@ -1,5 +1,5 @@
 #include "terrain.hpp"
-
+#include <cstdlib>
 
 
 void Grille::gldisplay()
@@ -107,7 +107,6 @@ int GrilleIA::prof_trous() const
     }
   return nb;
 }
-
 
 float GrilleIA::score() const
 {

@@ -1,9 +1,9 @@
 
-// g++ gl2d.cpp -lGL -lGLU -lglut
+// g++ pong.cpp -lGL -lGLU -lglut
 
 
 #include <GL/glut.h>  // GLUT, include glu.h and gl.h
-#include <cmath>     // Needed for sin, cos
+#include <cmath>    
 #include <iostream>
 #define PI 3.14159265f
 
@@ -26,8 +26,7 @@ public:
   bool fullScreenMode; // Full-screen or windowed mode?
 
   int refreshMillis;      // Refresh period in milliseconds
-
-
+  
   glFenetre()
   {
     title = (char*)("Full-Screen & Windowed Mode");
@@ -92,6 +91,15 @@ public:
       }
   }
 
+  std::vector<float> winBounds()
+  {
+    std::vector<float> v(4,0.0f);
+    v[0]=(float)xLeft;
+    v[1]=(float)xRight;
+    v[2]=(float)yBottom;
+    v[3]=(float)yTop;
+    return v;
+  } 
 };
 
 
@@ -99,7 +107,7 @@ class Pong
 {
 public:
   float bx,by; // ball position
-  float vx,vy;
+  float vx,vy; // ball speed
   float p[2]; // players positions
   int score[2];
   
@@ -108,7 +116,9 @@ public:
   float thickness;
   float size[2];
 
-  // up/down up/down
+  // Bounds: xRight, xLeft, yBottom, yTop
+  std::vector<float> bounds;
+  // J1:up/down J2:up/down
   std::vector<bool> keypress;
 
   Pong()
@@ -131,7 +141,7 @@ public:
     keypress.resize(4,false);
   }
 
-  void gldisplay(glFenetre& fen)
+  void gldisplay()
   {
     glClear(GL_COLOR_BUFFER_BIT);  // Clear the color buffer
     glMatrixMode(GL_MODELVIEW);    // To operate on the model-view matrix
@@ -157,16 +167,16 @@ public:
     glLoadIdentity();
     glBegin(GL_QUADS);
     glColor3f(0.0f, 1.0f, 0.0f);  
-    glVertex2f(fen.xLeft+margin,p[0]);
-    glVertex2f(fen.xLeft+margin-thickness,p[0]);
-    glVertex2f(fen.xLeft+margin-thickness,p[0]+size[0]);
-    glVertex2f(fen.xLeft+margin,p[0]+size[0]);
+    glVertex2f(bounds[0]+margin,p[0]);
+    glVertex2f(bounds[0]+margin-thickness,p[0]);
+    glVertex2f(bounds[0]+margin-thickness,p[0]+size[0]);
+    glVertex2f(bounds[0]+margin,p[0]+size[0]);
 
     glColor3f(0.0f, 0.0f, 1.0f); 
-    glVertex2f(fen.xRight-margin,p[1]);
-    glVertex2f(fen.xRight-margin+thickness,p[1]);
-    glVertex2f(fen.xRight-margin+thickness,p[1]+size[1]);
-    glVertex2f(fen.xRight-margin,p[1]+size[1]);
+    glVertex2f(bounds[1]-margin,p[1]);
+    glVertex2f(bounds[1]-margin+thickness,p[1]);
+    glVertex2f(bounds[1]-margin+thickness,p[1]+size[1]);
+    glVertex2f(bounds[1]-margin,p[1]+size[1]);
     glEnd();
 
   }
@@ -197,63 +207,63 @@ public:
       }
   }
 
-  void update(glFenetre& fen)
+  void update()
   {
     bx+=vx;
     by+=vy;
     // Check if the ball exceeds the edges
-    if (bx+br > fen.xRight) 
+    if (bx+br > bounds[1]) 
       {
-	bx = fen.xRight-br;
+	bx = bounds[1]-br;
 	vx = -vx;
 	score[0]++;
 	std::cout<<score[0]<<" - "<<score[1]<<std::endl;
       } 
-    else if (bx-br < fen.xLeft) 
+    else if (bx-br < bounds[0]) 
       {
-	bx = fen.xLeft+br;
+	bx = bounds[0]+br;
 	vx= -vx;
 	score[1]++;
 	std::cout<<score[0]<<" - "<<score[1]<<std::endl;
       }
-    else if (by+br > fen.yTop) 
+    else if (by+br > bounds[3]) 
       {
-	by = fen.yTop-br;
+	by = bounds[3]-br;
 	vy = -vy;
       } 
-    else if (by-br < fen.yBottom) 
+    else if (by-br < bounds[2]) 
       {
-	by = fen.yBottom+br;
+	by = bounds[2]+br;
 	vy= -vy;
       }
     // contact : à améliorer
-    else if ( ((by+br)>(p[0])) && ((by-br)<(p[0]+size[0])) && (bx-br < fen.xLeft+margin) )
+    else if ( ((by+br)>(p[0])) && ((by-br)<(p[0]+size[0])) && (bx-br < bounds[0]+margin) )
       {
 	float nv=(vx*vx+vy*vy);
 	vx = fabs(vx);
 	if (by<p[0]) 
 	  {
-	    vy=vx*(by-p[0])/(bx-fen.xLeft-margin);
+	    vy=vx*(by-p[0])/(bx-bounds[0]-margin);
 	  }
 	else if (by>p[0]+size[0]) 
 	  {
-	    vy=vx*(by-p[0]-size[0])/(bx-fen.xLeft-margin);
+	    vy=vx*(by-p[0]-size[0])/(bx-bounds[0]-margin);
 	  }
 	float nv2=vx*vx+vy*vy;
 	vx*=1.05*sqrt(nv/nv2);
 	vy*=1.05*sqrt(nv/nv2);
       }
-    else if ( ((by+br)>(p[1])) && ((by-br)<(p[1]+size[1])) && (bx+br > fen.xRight-margin) )
+    else if ( ((by+br)>(p[1])) && ((by-br)<(p[1]+size[1])) && (bx+br > bounds[1]-margin) )
       {
 	float nv=(vx*vx+vy*vy);
 	vx = -fabs(vx);
 	if (by<p[1]) 
 	  {
-	    vy=vx*(by-p[1])/(bx-fen.xRight+margin);
+	    vy=vx*(by-p[1])/(bx-bounds[1]+margin);
 	  }
 	else if (by>p[1]+size[1]) 
 	  {
-	    vy=vx*(by-p[1]-size[1])/(bx-fen.xRight+margin);
+	    vy=vx*(by-p[1]-size[1])/(bx-bounds[1]+margin);
 	  }
 	float nv2=vx*vx+vy*vy;
 	vx*=1.05*sqrt(nv/nv2);
@@ -266,34 +276,31 @@ public:
 glFenetre WIN;
 Pong GAME;
 
-
-
 // Callback handler for window re-paint event 
 void display() {
   glClear(GL_COLOR_BUFFER_BIT);  // Clear the color buffer
   glMatrixMode(GL_MODELVIEW);    // To operate on the model-view matrix
   glLoadIdentity();              // Reset model-view matrix
  
-  GAME.gldisplay(WIN);
+  GAME.gldisplay();
 
   glutSwapBuffers();  // Swap front and back buffers (of double buffered mode)
  
 }
- 
 // Call back when the windows is re-sized 
 void reshape(GLsizei w, GLsizei h) 
 {
   WIN.reshape(w,h);
+  GAME.bounds=WIN.winBounds();
 }
  
 // Called back when the timer expired 
 void displayTimer(int value) {
-  GAME.update(WIN);
+  GAME.update();
   GAME.keyboard();
   glutPostRedisplay();    // Post a paint request to activate display()
   glutTimerFunc(WIN.refreshMillis, displayTimer, 0); // subsequent timer call at milliseconds
 }
-
 
 // Callback handler for normal-key event
 void keyboard(unsigned char key, int x, int y) {
@@ -304,36 +311,6 @@ void keyboard(unsigned char key, int x, int y) {
     break;
   }
 }
-/*
-// Callback handler for special-key event 
-void specialKeysPress(int key, int x, int y) {
-  switch (key) {
-  case GLUT_KEY_F1: // F1: Toggle between full-screen and windowed mode
-    WIN.fullscreenToggle();
-    break;
-  case GLUT_KEY_RIGHT:
-    break;
-  case GLUT_KEY_LEFT:  
-    break;
-  case GLUT_KEY_UP:  
-    GAME.p[0]+=0.1;
-    if (GAME.p[0]>(1.0-GAME.size[0])) GAME.p[0]=(1.0-GAME.size[0]);
-    break;
-  case GLUT_KEY_DOWN: 
-    GAME.p[0]-=0.1;
-    if (GAME.p[0]<-1.0) GAME.p[0]=-1.0;
-    break;
-  case GLUT_KEY_PAGE_UP:
-    GAME.p[1]+=0.1;
-    if (GAME.p[1]>(1.0-GAME.size[1])) GAME.p[1]=(1.0-GAME.size[1]);
-    break;
-  case GLUT_KEY_PAGE_DOWN:
-    GAME.p[1]-=0.1;
-    if (GAME.p[1]<-1.0) GAME.p[1]=-1.0;
-    break;
-  }
-}
-*/
 // Callback handler for special-key event 
 void specialKeysPress(int key, int x, int y) {
   switch (key) {
@@ -359,9 +336,6 @@ void specialKeysPress(int key, int x, int y) {
   }
   GAME.keyboard();
 }
-
-
-
 // Callback handler for special-key event 
 void specialKeysUp(int key, int x, int y) {
   switch (key) {
@@ -383,22 +357,24 @@ void specialKeysUp(int key, int x, int y) {
 
 
 /* Main function: GLUT runs as a console application starting at main() */
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv) 
+{
   glutInit(&argc, argv);            // Initialize GLUT
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE); // Enable double buffered mode
   glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
   glutInitWindowSize(WIN.width, WIN.height);  // Initial window width and height
   glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY); // Initial window top-left corner (x, y)
   glutCreateWindow(WIN.title);      // Create window with given title
-  glutFullScreen();             // Put into full screen
+  //glutFullScreen();             // Put into full screen
 
-  glutDisplayFunc(display);     // Register callback handler for window re-paint
-  glutReshapeFunc(reshape);     // Register callback handler for window re-shape
-  glutSpecialFunc(specialKeysPress); // Register callback handler for special-key event
-  glutSpecialUpFunc(specialKeysUp); // Register callback handler for special-key event
-  glutKeyboardFunc(keyboard);   // Register callback handler for special-key event
+  // Register callback handler for ...
+  glutReshapeFunc(reshape);          // ... window re-shape
+  glutDisplayFunc(display);          // ... window re-paint
+  glutSpecialFunc(specialKeysPress); // ... special-key down event
+  glutSpecialUpFunc(specialKeysUp);  // ... special-key up event
+  glutKeyboardFunc(keyboard);        // ... ascii key event
 
+  GAME.bounds=WIN.winBounds();
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
 
   glutMainLoop();               // Enter event-processing loop

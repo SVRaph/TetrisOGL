@@ -64,7 +64,8 @@ class Joueur
   ~Joueur();
   void update(int&,bool&);
   virtual void getKey(int key,bool down){}
-  virtual void command(){std::cout<<"oups"<<std::endl;}
+  virtual bool iskeypressed(){return false;}
+  virtual void command(){std::cout<<"warning: unexpected Joueur.command"<<std::endl;}
   virtual void newTetromino();
 
   bool fisValid(){return isValid(P,T);}
@@ -79,11 +80,18 @@ class Human : public Joueur
   int keyconf[4];
   bool keypressed[4];
 public:
-  Human(): Joueur();
+  Human(): Joueur()
+  { 
+    for(int i=0;i<4;i++)
+    {
+      keyconf[i]=KEYS[i];
+      keypressed[i]=false;    
+    }
+  }
   virtual void getKey(int key,bool down);
   virtual void command();
+  virtual bool iskeypressed(){return (keypressed[0]||keypressed[1]||keypressed[2]||keypressed[3]);}
 };
-
 
 class IA : public Joueur
 {
@@ -91,7 +99,7 @@ class IA : public Joueur
   int robj;
   int level;
 public:
-  IA(): Joueur(), level(1){}
+  IA(int l=1): Joueur(), level(l){}
   virtual void command();
   virtual void newTetromino();
 };
@@ -102,10 +110,14 @@ class Tetris
   int nbj,nbh,nbIA;
   int sx,sy;
   int level;
+  bool gameover;
   std::vector< Joueur* > vJ;
  public:
-  int moveMillis(){return std::max(0,20-1*level);}
-  int fallMillis(){return 530-50*level;}
+  int moveMillis(){return 80;}
+  int fallMillis(){return std::max(0,80-7*level);}
+  
+  bool isover(){return gameover;}
+  bool iskeypressed(){return (nbh>0)&&(vJ[0]->iskeypressed());}
 
   Tetris(int w,int h,int n=1,int lv=1);
   ~Tetris();

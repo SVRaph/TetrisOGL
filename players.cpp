@@ -37,14 +37,13 @@ void Joueur::newTetromino()
   Pnext = new Tetrominos(r,T->sx/2-2,T->sy-4);
 }
 
-
 void Joueur::update(int& nbl,bool& gover)
 {
   nbl=0;
   gover=false;
   if (!move(0,-1))
     {
-      gover=(P->pos[1]>=sy-4)
+      gover=(P->pos[1]>=T->sy-4);
       fapply(nbl);
       newTetromino();
     }
@@ -79,21 +78,12 @@ void Joueur::fall()
 
 // --- Human --- //
 
-Human::Human()
-{
-  for(int i=0;i<4;i++)
-    {
-      keyconf[i]=KEYS[i];
-      keypressed[i]=false;    
-    }
-}
-
 void Human::getKey(int key,bool down)
 {
   for(int i=0;i<4;i++)
     {
       if (key==keyconf[i])
-	keypressed=down;
+	keypressed[i]=down;
     }
   this->command();
 }
@@ -101,12 +91,18 @@ void Human::command()
 {
   if (keypressed[0])
     move(+1,0);
-  if (keypressed[1]) 
+  if (keypressed[1])
     move(-1,0);
-  if (keypressed[2])  
-    turn(+1);
+  if (keypressed[2])
+    {
+      turn(+1);
+      keypressed[2]=false;
+    }
   if (keypressed[3]) 
-    fall();
+    {
+     fall();
+     keypressed[3]=false;
+    }
 }
 
 // --- IA --- //
@@ -116,7 +112,6 @@ void IA::newTetromino()
   Joueur::newTetromino();
   instructions(T,P->type,Pnext->type,xobj,robj);
 }
-
 void IA::command()
 {
   if (P->rot != robj) 
@@ -133,6 +128,7 @@ void IA::command()
 
 Tetris::Tetris(int w,int h,int n,int lv)
 {
+  gameover=false;
   sx=w;
   sy=h;
   level=lv;
@@ -142,14 +138,13 @@ Tetris::Tetris(int w,int h,int n,int lv)
   vJ.resize(nbj,NULL);
   for(int j=0;j<nbh;j++)
     {
-      vJ[j]= new Joueur;
+      vJ[j]= new Human;
       vJ[j]->init(w,h);
     }
   for(int j=nbh;j<nbh+nbIA;j++)
     {
-      vJ[j]= new IA;
+      vJ[j]= new IA(level);
       vJ[j]->init(w,h);
-      vJ[j]->level=level;
     }
 }
 Tetris::~Tetris()
@@ -162,20 +157,22 @@ Tetris::~Tetris()
 void Tetris::update()
 {
   int nbl;
-  bool gameover=false;
   bool disp_scores=false;
+  bool go;
   for(int j=0;j<nbj;j++)
     {
-      vJ[j]->update(nbl,gameover);
+      vJ[j]->update(nbl,go);
       assert(nbl<5);
       if (nbl>0)
 	{
 	  vJ[j]->score+=SCORE[nbl];
 	  disp_scores=true;
+	  vJ[(j+1)%nbj]->T->addLines(4,nbl-1);
 	}
-      if(gameover)
+      if(go)
 	{
 	  std::cout<<"Partie terminée"<<std::endl;
+	  this->gameover=true;
 	}
     }
   if (disp_scores)
@@ -188,8 +185,9 @@ void Tetris::update()
 }
 void Tetris::command(bool ia)
 {
-  int nc=nbh+(ia?nbIA:0);
-  for(int j=0;j<nc;j++)
+  int ni=(ia?nbh:0);
+  int nf=(ia?nbIA:nbh);
+  for(int j=ni;j<ni+nf;j++)
     {
       vJ[j]->command();
     }
@@ -220,7 +218,6 @@ void Tetris::gldisplay()
     }
   glPopMatrix();
 }
-
 
 
 // ----------------------

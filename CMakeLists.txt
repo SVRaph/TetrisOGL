@@ -24,7 +24,7 @@ target_link_libraries(client ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${FMOD} ${Boost
 
 ## Compiler flags
 if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "-std=c++0x -lpthread")        ## Optimize
-    set(CMAKE_EXE_LINKER_FLAGS "-lpthread")  ## Strip binary
+    set(CMAKE_CXX_FLAGS "-std=c++0x")        ## Optimize
+    set(CMAKE_EXE_LINKER_FLAGS "")  ## Strip binary
 endif()
 

@@ -224,7 +224,7 @@ void Tetris::gldisplay()
   for(int j=0;j<nbj;j++)
     {
       if (j>0) glTranslatef((float)sx,0.0f,0.0f);
-      vJ[j]->P->gldisplay();
+      if (j<nbh+nbIA) vJ[j]->P->gldisplay();
       vJ[j]->T->gldisplay();
     }
   glPopMatrix();
@@ -331,7 +331,7 @@ void Tetris::get_data(std::vector<uint32_t>& buf) const
 // RQ : pas de réalocation mémoire
 void Tetris::set_data(const std::vector<uint32_t>& buf)
 {
-  int n=nbj-(nbh+nbIA); // nbre de joueurs distants
+  int n=nbnet; // nbre de joueurs distants
   int len=3+n+n*sx*sy;
   assert(n==buf[0] && sx==buf[1] && sy==buf[2] && len==buf.size());
  
@@ -341,7 +341,7 @@ void Tetris::set_data(const std::vector<uint32_t>& buf)
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    vJ[j]->T->v[x][y]=buf[3+n+y+(x+j*sx)*sy];
+	    vJ[nbh+nbIA+j]->T->v[x][y]=buf[3+n+y+(x+j*sx)*sy];
 	  }
     }
 }

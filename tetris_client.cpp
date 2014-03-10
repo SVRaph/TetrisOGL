@@ -19,6 +19,7 @@
 
 using boost::asio::ip::udp;
 const int PORT = 1313;
+const int BUFFER_LEN=3+1+12*16;
 
 
 void msleep(int ms){usleep(ms*1000);}
@@ -128,6 +129,8 @@ void task_glut()
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
+  glutTimerFunc(0, gameTimer, 0);
+  glutTimerFunc(0, moveTimer, 0);
 
   glutMainLoop();               // Enter event-processing loop
   keep_running=false;
@@ -136,8 +139,8 @@ void task_glut()
 void task_net()
 {
 
-  std::vector<uint32_t> send_buf;
-  std::vector<uint32_t> recv_buf;
+  std::vector<uint32_t> send_buf(BUFFER_LEN);
+  std::vector<uint32_t> recv_buf(BUFFER_LEN);
   try
     {
       // Initialisation
@@ -178,8 +181,9 @@ int main(int argc, char** argv) {
 
   if (argc < 2)
     {
-      std::cerr << "Usage: client <host>" << std::endl;
-      return 1;
+      std::cerr << "Usage: client <host=127.0.0.1>" << std::endl;
+      HOST_IP="127.0.0.1";
+      //return 1;
     }
   else
     {
@@ -192,7 +196,7 @@ int main(int argc, char** argv) {
   
   //do other stuff
   MUSIQUE.load(0);
-  MUSIQUE.play();
+  //MUSIQUE.play();
 
   // Join threads
   thread_1.join();

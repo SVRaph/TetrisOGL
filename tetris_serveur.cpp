@@ -8,7 +8,7 @@
 
 using boost::asio::ip::udp;
 const int PORT = 1313;
-
+const int BUFFER_LEN=3+1+12*16;
 
 // la classe host représente 1 client
 struct Host
@@ -22,14 +22,19 @@ class Server
 {
   std::vector< Host > clients;
   int sx,sy;
-  bool pause; // not used yet
 public:
-  Server(int w,int h): sx(w),sy(h),pause(false){}
+  Server(int w,int h): sx(w),sy(h){}
   int nb_clients(){return clients.size();}
   void set_data(const std::vector<uint32_t>& buf,const udp::endpoint& remote)
   {
     int n=buf[0];
     int len=3+n+n*sx*sy;
+    if (nb_clients()==0)
+      {
+	sx=buf[1];
+	sy=buf[2];
+      }
+
     assert(sx==buf[1] && sy==buf[2] && len==buf.size());
     bool found=false;
     for (int c=0;c<nb_clients();c++)
@@ -51,10 +56,23 @@ public:
   }
   void get_data(std::vector<uint32_t>& buf,const udp::endpoint& remote)
   {
-    bool check= (nb_clients()<3) && (remote==clients[0].remote_endpoint || remote==clients[1].remote_endpoint);
-    if (!check) std::cout<<"More than 2 different clients: not implemented yet"<<std::endl;
-    if (remote==clients[0].remote_endpoint) buf=clients[1].buffer;
-    if (remote==clients[1].remote_endpoint) buf=clients[0].buffer;
+    if (nb_clients()<2)
+      {
+	buf[0]=1;
+	buf[1]=sx;
+	buf[2]=sy;
+      }
+    else if (remote==clients[0].remote_endpoint) 
+      buf=clients[1].buffer;
+    else if (remote==clients[1].remote_endpoint) 
+      buf=clients[0].buffer;
+    else
+      {
+	std::cout<<"More than 2 different clients: not implemented yet"<<std::endl;
+	buf[0]=1;
+	buf[1]=sx;
+	buf[2]=sy;
+      }
   }
 };
 
@@ -74,8 +92,8 @@ int main(int argc, char** argv)
       boost::asio::io_service io_service;
       udp::socket socket(io_service, udp::endpoint(udp::v4(), PORT));
   
-      std::vector<uint32_t> send_buf;
-      std::vector<uint32_t> recv_buf;
+      std::vector<uint32_t> send_buf(BUFFER_LEN);
+      std::vector<uint32_t> recv_buf(BUFFER_LEN);
       udp::endpoint remote_endpoint;
 
       while(keep_running)

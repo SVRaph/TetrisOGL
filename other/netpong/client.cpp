@@ -8,7 +8,7 @@ glFenetre WIN;
 Pong GAME;
 
 // Callback handler for window re-paint event 
-void display() {
+void display(){
   glClear(GL_COLOR_BUFFER_BIT);  // Clear the color buffer
   glMatrixMode(GL_MODELVIEW);    // To operate on the model-view matrix
   glLoadIdentity();              // Reset model-view matrix
@@ -19,8 +19,7 @@ void display() {
  
 }
 // Call back when the windows is re-sized 
-void reshape(GLsizei w, GLsizei h) 
-{
+void reshape(GLsizei w, GLsizei h) {
   WIN.reshape(w,h);
   GAME.bounds=WIN.winBounds();
 }
@@ -42,7 +41,7 @@ void keyboard(unsigned char key, int x, int y) {
     break;
   }
 }
-// Callback handler for special-key event 
+// Callback handlers for special-key event 
 void specialKeysPress(int key, int x, int y) {
   switch (key) {
   case GLUT_KEY_F1: // F1: Toggle between full-screen and windowed mode
@@ -67,7 +66,6 @@ void specialKeysPress(int key, int x, int y) {
   }
   GAME.keyboard();
 }
-// Callback handler for special-key event 
 void specialKeysUp(int key, int x, int y) {
   switch (key) {
   case GLUT_KEY_UP: 

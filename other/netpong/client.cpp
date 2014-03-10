@@ -27,7 +27,7 @@ void reshape(GLsizei w, GLsizei h)
  
 // Called back when the timer expired 
 void displayTimer(int value) {
-  GAME.update();
+  GAME.update(WIN.refreshMillis*0.001);
   GAME.keyboard();
   glutPostRedisplay();    // Post a paint request to activate display()
   glutTimerFunc(WIN.refreshMillis, displayTimer, 0); // subsequent timer call at milliseconds
@@ -89,11 +89,12 @@ void specialKeysUp(int key, int x, int y) {
 // GLUT runs as a console program
 void task_glut()
 {
-
-  glutInitWindowSize(WIN.width, WIN.height);  // Initial window width and height
-  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY); // Initial window top-left corner
-  glutCreateWindow(WIN.title);      // Create window with given title
-  //glutFullScreen();             // Put into full screen
+  // Initialise and create window
+  glutInitWindowSize(WIN.width, WIN.height);
+  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY);
+  glutCreateWindow(WIN.title);                           
+  if (WIN.fullScreenMode) glutFullScreen();
+  GAME.bounds=WIN.winBounds();     
 
   // Register callback handler for ...
   glutReshapeFunc(reshape);          // ... window re-shape
@@ -102,7 +103,6 @@ void task_glut()
   glutSpecialUpFunc(specialKeysUp);  // ... special-key up event
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
-  GAME.bounds=WIN.winBounds();
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
 
   glutMainLoop();               // Enter event-processing loop
@@ -131,7 +131,6 @@ void task_net()
 	  udp::endpoint sender_endpoint;
 	  size_t len = socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
 	  GAME.client_set_data(recv_buf);
-	  //std::cout.write(recv_buf.data(), len);
 
 	  msleep(100);
 	}

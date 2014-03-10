@@ -140,8 +140,8 @@ public:
 
     bx=0.0f;
     by=0.0f;
-    vx=0.02f;
-    vy=0.001f;
+    vx=2.0f;
+    vy=0.1f;
 
     keypress.resize(4,false);
   }
@@ -212,10 +212,10 @@ public:
       }
   }
 
-  void update()
+  void update(float dt=1.0f)
   {
-    bx+=vx;
-    by+=vy;
+    bx+=dt*vx;
+    by+=dt*vy;
     // Check if the ball exceeds the edges
     if (bx+br > bounds[1]) 
       {
@@ -302,8 +302,12 @@ public:
     // on ignore le joueur pour l'instant
     p[0]=recv_buf[0];
     p[1]=recv_buf[1];
-    bx  =recv_buf[2];
-    by  =recv_buf[3];
+    // si l'écart et inférieur à 1e-2s on ne touche à rien
+    if ( ((recv_buf[2]-bx)*(recv_buf[2]-bx)+(recv_buf[3]-by)*(recv_buf[3]-by)) > ((vx*vx+vy*vy)*1e-4) )
+      {
+	bx  =recv_buf[2];
+	by  =recv_buf[3];
+      }
   }
 
 };

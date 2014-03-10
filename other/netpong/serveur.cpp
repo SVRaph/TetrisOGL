@@ -11,7 +11,7 @@ void task_game()
   GAME.bounds[1]=+1.0*RATIO;
   while (keep_running)
     {
-      GAME.update();
+      GAME.update(0.08);
       msleep(80);
     }
 }

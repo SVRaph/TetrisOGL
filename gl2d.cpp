@@ -49,6 +49,7 @@ void moveTimer(int jou) {
  
 // Callback handler for normal-key event
 void keyboard(unsigned char key, int x, int y) {
+  static bool pause=false;
   switch (key) {
     // ESC key
   case 27:    
@@ -58,6 +59,11 @@ void keyboard(unsigned char key, int x, int y) {
     // P key
   case 80:
   case 112:
+    GAME.ispaused=!GAME.ispaused;
+    break;
+   // M key
+  case 77:
+  case 109:
     MUSIQUE.switchpause();
     break;
     // N key

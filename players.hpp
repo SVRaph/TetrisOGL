@@ -111,6 +111,7 @@ class Tetris
   int sx,sy;
   int level;
   bool gameover;
+  bool ispaused;
   std::vector< Joueur* > vJ;
  public:
   int moveMillis(){return 80;}

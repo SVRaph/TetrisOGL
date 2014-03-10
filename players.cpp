@@ -156,6 +156,7 @@ Tetris::~Tetris()
 }
 void Tetris::update()
 {
+  if (ispaused) return;
   int nbl;
   bool disp_scores=false;
   bool go;
@@ -185,6 +186,7 @@ void Tetris::update()
 }
 void Tetris::command(bool ia)
 {
+  if (ispaused) return;
   int ni=(ia?nbh:0);
   int nf=(ia?nbIA:nbh);
   for(int j=ni;j<ni+nf;j++)

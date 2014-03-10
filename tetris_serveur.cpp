@@ -1,45 +1,85 @@
-
-// g++ gl2d.cpp -lGL -lGLU -lglut
-
+#include <cassert>
+#include <vector>
+#include <cstdint>
 #include <iostream>
- 
-//#include "glFenetre.h"
-#include "net_header.hpp"
-#include "players.hpp"
-//#include "musique.hpp"
 
-// Global variables
-bool keep_running=true;
-Tetris GAME(12,16,0,1,1,3);
+// Net
+#include <boost/asio.hpp>
+
+using boost::asio::ip::udp;
+const int PORT = 1313;
 
 
-
-void task_game()
+// la classe host représente 1 client
+struct Host
 {
-  // pour les mvt autos : IA et descente
-  int k=-1;
-  while (keep_running)
-    {
-      k=(k+1)%7;
-      GAME.command(true); // mouvement de l'IA
-      if (k==0) GAME.update();
-      if (GAME.isover()) keep_running=false;
-    }
-}
+  udp::endpoint remote_endpoint;
+  std::vector<uint32_t> buffer;
+};
 
-void task_net()
+// la classe serveur contient les données envoyées par tous les clients
+class Server
 {
+  std::vector< Host > clients;
+  int sx,sy;
+  bool pause; // not used yet
+public:
+  Server(int w,int h): sx(w),sy(h),pause(false){}
+  int nb_clients(){return clients.size();}
+  void set_data(const std::vector<uint32_t>& buf,const udp::endpoint& remote)
+  {
+    int n=buf[0];
+    int len=3+n+n*sx*sy;
+    assert(sx==buf[1] && sy==buf[2] && len==buf.size());
+    bool found=false;
+    for (int c=0;c<nb_clients();c++)
+      {
+	if (remote==clients[c].remote_endpoint)
+	  {
+	    found=true;
+	    clients[c].buffer=buf;
+	  }
+      }
+    if(!found)
+      {
+	Host h;
+	h.remote_endpoint=remote;
+	h.buffer=buf;
+	clients.push_back(h);
+	std::cout<<"New client"<<std::endl;
+      }
+  }
+  void get_data(std::vector<uint32_t>& buf,const udp::endpoint& remote)
+  {
+    bool check= (nb_clients()<3) && (remote==clients[0].remote_endpoint || remote==clients[1].remote_endpoint);
+    if (!check) std::cout<<"More than 2 different clients: not implemented yet"<<std::endl;
+    if (remote==clients[0].remote_endpoint) buf=clients[1].buffer;
+    if (remote==clients[1].remote_endpoint) buf=clients[0].buffer;
+  }
+};
+
+
+
+// Run the server
+int main(int argc, char** argv) 
+{
+  // Global variables
+  Server SERVEUR(12,16);
+  bool keep_running=true;
+
   std::vector<uint32_t> send_buf;
   std::vector<uint32_t> recv_buf;
   try
     {
       boost::asio::io_service io_service;
-
       udp::socket socket(io_service, udp::endpoint(udp::v4(), PORT));
+  
+      std::vector<uint32_t> send_buf;
+      std::vector<uint32_t> recv_buf;
+      udp::endpoint remote_endpoint;
 
       while(keep_running)
 	{
-	  udp::endpoint remote_endpoint;
 	  boost::system::error_code error;
 	  socket.receive_from(boost::asio::buffer(recv_buf),
 			      remote_endpoint, 0, error);
@@ -47,8 +87,8 @@ void task_net()
 	  if (error && error != boost::asio::error::message_size)
 	    throw boost::system::system_error(error);
 
-	  GAME.set_data(recv_buf);
-	  GAME.get_data(send_buf);
+	  SERVEUR.set_data(recv_buf,remote_endpoint);
+	  SERVEUR.get_data(send_buf,remote_endpoint);
 
 	  boost::system::error_code ignored_error;
 	  socket.send_to(boost::asio::buffer(send_buf),
@@ -60,23 +100,6 @@ void task_net()
       std::cerr << e.what() << std::endl;
     }
 
-}
-
-
-// Run the 2 threads
-int main(int argc, char** argv) {
-
-  srand(time(NULL));
-  // Create and run threads
-  boost::thread thread_1 = boost::thread(task_game);
-  boost::thread thread_2 = boost::thread(task_net);
-
-  // do other stuff
-  while (keep_running) sleep(10);
-
-  // Join threads
-  thread_2.join();
-  thread_1.join();
 
   return 0;
 }

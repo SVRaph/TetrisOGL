@@ -1,17 +1,33 @@
-
-// g++ gl2d.cpp -lGL -lGLU -lglut
-#include <iostream>
- 
 #include "glFenetre.h"
 #include "players.hpp"
 #include "musique.hpp"
-#include "net_header.hpp"
+
+#include <cassert>
+#include <vector>
+#include <iostream>
+
+#include <cstdlib>
+#include <cstdint>
+#include <unistd.h> // usleep
+#include <ctime>
+#include <string>
+
+// Threads 
+#include <boost/thread.hpp>
+// Net
+#include <boost/asio.hpp>
+
+using boost::asio::ip::udp;
+const int PORT = 1313;
+
+
+void msleep(int ms){usleep(ms*1000);}
 
 // Global variables
 std::string HOST_IP;
 bool keep_running=true;
 
-Tetris GAME(12,16,1,0,1,3);
+Tetris GAME(12,16,0,1,1,3);
 glFenetre WIN; 
 Music MUSIQUE;
 

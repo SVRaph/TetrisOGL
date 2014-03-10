@@ -126,30 +126,39 @@ void IA::command()
 
 // --- Tetris --- // 
 
-Tetris::Tetris(int w,int h,int n,int lv)
+Tetris::Tetris(int w,int h,int n1,int n2,int n3,int lv)
 {
   gameover=false;
   sx=w;
   sy=h;
   level=lv;
-  nbj=n;
-  nbh=std::min(1,n);
-  nbIA=nbj-nbh;
+
+  nbj=n1+n2+n3;
+  nbh=n1;
+  nbIA=n2;
+  nbnet=n3;
+
   vJ.resize(nbj,NULL);
-  for(int j=0;j<nbh;j++)
+  int j=0;
+  for(;j<nbh;j++)
     {
       vJ[j]= new Human;
       vJ[j]->init(w,h);
     }
-  for(int j=nbh;j<nbh+nbIA;j++)
+  for(;j<nbh+nbIA;j++)
     {
       vJ[j]= new IA(level);
+      vJ[j]->init(w,h);
+    }
+  for(;j<nbj;j++)
+    {
+      vJ[j]= new Joueur;
       vJ[j]->init(w,h);
     }
 }
 Tetris::~Tetris()
 {
-  for(int j=0;j<nbh+nbIA;j++)
+  for(int j=0;j<nbj;j++)
     {
       delete vJ[j];
     }
@@ -285,3 +294,55 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 }
 
 
+
+// ----------------------
+//       Network
+// ----------------------
+
+void Tetris::get_data(std::vector<uint32_t>& buf) const
+{
+  int n=nbh+nbIA;  // nombre de joueurs en local
+  int len=3+n+n*sx*sy; // n,sx,sy,score1...scoren,[T1 (en col)],...,[Tn]
+  buf.resize(len,0);
+  buf[0]=n;
+  buf[1]=sx;
+  buf[2]=sy;
+  for(int j=0;j<n;j++)
+    {
+      //les scores
+      buf[3+j]=vJ[j]->score;
+      // les terrains
+      for(int x=0;x<sx;x++)
+	for(int y=0;y<sy;y++)
+	  {
+	    buf[3+n+y+(x+j*sx)*sy]=(*(vJ[j]->T))[x][y];
+	  }
+      // les pièces
+      for(int i=0;i<16;i++)
+	{
+	  if (!vJ[j]->P->fshape(i)) continue;
+	  x=(i%4)+P->pos[0];
+	  y=(i/4)+P->pos[1];
+	  buf[3+n+y+(x+j*sx)*sy]=(vJ[j]->P->type+2);
+	}
+    }
+}
+  
+// RQ : pas de réalocation mémoire
+void Tetris::set_data(const std::vector<uint32_t>& buf)
+{
+  int n=nbj-(nbh+nbIA); // nbre de joueurs distants
+  int len=3+n+n*sx*sy;
+  assert(n==buf[0] && sx==buf[1] && sy==buf[2] && len==buf.size());
+ 
+  for(int j=0;j<n;j++)
+    {
+      vJ[nbh+nbIA+j]->score=buf[3+j];
+      for(int x=0;x<sx;x++)
+	for(int y=0;y<sy;y++)
+	  {
+	    (*(vJ[j]->T))[x][y]=buf[3+n+y+(x+j*sx)*sy];
+	  }
+    }
+}
+  

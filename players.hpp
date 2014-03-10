@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstdint>
 #include <ctime>
 
 #include "constants.hpp"
@@ -107,7 +108,7 @@ public:
 
 class Tetris
 {
-  int nbj,nbh,nbIA;
+  int nbj,nbh,nbIA,nbnet;
   int sx,sy;
   int level;
   bool gameover;
@@ -120,13 +121,16 @@ class Tetris
   bool isover(){return gameover;}
   bool iskeypressed(){return (nbh>0)&&(vJ[0]->iskeypressed());}
 
-  Tetris(int w,int h,int n=1,int lv=1);
+  Tetris(int w,int h,int n1=1,int n2=1,int n3=0,int lv=1);
   ~Tetris();
   std::vector<float> winBounds();
   void gldisplay();
   void update();
   void command(bool ia);
   void keyboard(int key,bool down){if (nbh>0) vJ[0]->getKey(key,down);}
+
+  void get_data(std::vector<uint32_t>&) const;
+  void set_data(const std::vector<uint32_t>&);
 };
 
 

@@ -1,13 +1,16 @@
 
 // g++ gl2d.cpp -lGL -lGLU -lglut
-
 #include <iostream>
  
 #include "glFenetre.h"
 #include "players.hpp"
 #include "musique.hpp"
+#include "net_header.hpp"
 
 // Global variables
+std::string HOST_IP;
+bool keep_running=true;
+
 Tetris GAME(12,16,1,0,1,3);
 glFenetre WIN; 
 Music MUSIQUE;
@@ -74,7 +77,7 @@ void keyboard(unsigned char key, int x, int y) {
   }
 }
  
-// Callback handler for special-key event 
+// Callback handlers for special-key event 
 void specialKeys(int key, int x, int y) {
   switch (key) 
     {
@@ -93,6 +96,62 @@ void specialUpKeys(int key,int x,int y){
   GAME.keyboard(key,false);
 }
 
+void task_glut()
+{
+  // Initialise and create window
+  glutInitWindowSize(WIN.width, WIN.height);
+  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY);
+  glutCreateWindow(WIN.title);                           
+  if (WIN.fullScreenMode) glutFullScreen();
+  GAME.bounds=WIN.winBounds();     
+
+  // Register callback handler for ...
+  glutReshapeFunc(reshape);          // ... window re-shape
+  glutDisplayFunc(display);          // ... window re-paint
+  glutSpecialFunc(specialKeysPress); // ... special-key down event
+  glutSpecialUpFunc(specialKeysUp);  // ... special-key up event
+  glutKeyboardFunc(keyboard);        // ... ascii key event
+
+  glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
+
+  glutMainLoop();               // Enter event-processing loop
+  keep_running=false;
+}
+
+void task_net()
+{
+
+  std::vector<float> send_buf;
+  std::vector<float> recv_buf;
+  try
+    {
+      // Initialisation
+      boost::asio::io_service io_service;
+      boost::asio::ip::address ip_recv = boost::asio::ip::address::from_string(HOST_IP);
+      udp::endpoint receiver_endpoint(ip_recv,PORT);
+      udp::socket socket(io_service);
+      socket.open(udp::v4());
+      std::cout<<"connect to "<<ip_recv.to_string()<<std::endl;
+
+      while(keep_running)
+	{
+	  GAME.get_data(send_buf);
+	  socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
+
+	  udp::endpoint sender_endpoint;
+	  size_t len = socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+	  GAME.set_data(recv_buf);
+
+	  msleep(100);
+	}
+    }
+  catch (std::exception& e)
+    {
+      std::cerr << e.what() << std::endl;
+    }
+}
+
+
 
 // Main function: GLUT runs as a console application starting at main()
 int main(int argc, char** argv) {
@@ -101,26 +160,30 @@ int main(int argc, char** argv) {
   glutInit(&argc, argv);            // Initialize GLUT
   glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
   glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
-  glutInitWindowSize(WIN.width, WIN.height);  // Initial window width and height
-  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY); // Initial window top-left corner
-  glutCreateWindow(WIN.title);      // Create window with given title
-  if (WIN.fullScreenMode) glutFullScreen();             // Put into full screen
 
-  // Register callback handler for...
-  glutDisplayFunc(display);     // ... window re-paint
-  glutReshapeFunc(reshape);     // ... window re-shape
-  glutSpecialFunc(specialKeys); // ... special-key event
-  glutSpecialUpFunc(specialUpKeys); // ... special-key release event
-  glutKeyboardFunc(keyboard);   // ... key event
+  if (argc < 2)
+    {
+      std::cerr << "Usage: client <host>" << std::endl;
+      return 1;
+    }
+  else
+    {
+      HOST_IP=argv[1];
+    }
 
-  // Timer :  First timer call immediately
-  glutTimerFunc(0, displayTimer, 0);
-  glutTimerFunc(0, gameTimer, 0);
-  glutTimerFunc(0, moveTimer, 0);
-
+ // Create and run threads
+  boost::thread thread_1 = boost::thread(task_glut);
+  boost::thread thread_2 = boost::thread(task_net);
+  
+  //do other stuff
   MUSIQUE.load(0);
   MUSIQUE.play();
 
-  glutMainLoop();               // Enter event-processing loop
+  // Join threads
+  thread_1.join();
+  thread_2.join();
+  
+
+
   return 0;
 }

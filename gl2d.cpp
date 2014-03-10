@@ -41,7 +41,11 @@ void gameTimer(int value) {
   if (!GAME.isover())
     glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
   else 
-    glutDestroyWindow(glutGetWindow());
+    {
+      std::cout<<"Enter an int to quit"<<std::endl;
+      std::cin>>k;
+      glutDestroyWindow(glutGetWindow());
+    }
 }
 void moveTimer(int jou) {
   // pour la répétition des touches

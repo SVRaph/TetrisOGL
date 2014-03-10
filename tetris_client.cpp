@@ -118,14 +118,13 @@ void task_glut()
   glutInitWindowSize(WIN.width, WIN.height);
   glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY);
   glutCreateWindow(WIN.title);                           
-  if (WIN.fullScreenMode) glutFullScreen();
-  GAME.bounds=WIN.winBounds();     
+  if (WIN.fullScreenMode) glutFullScreen(); 
 
   // Register callback handler for ...
   glutReshapeFunc(reshape);          // ... window re-shape
   glutDisplayFunc(display);          // ... window re-paint
-  glutSpecialFunc(specialKeysPress); // ... special-key down event
-  glutSpecialUpFunc(specialKeysUp);  // ... special-key up event
+  glutSpecialFunc(specialKeys); // ... special-key down event
+  glutSpecialUpFunc(specialUpKeys);  // ... special-key up event
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
@@ -137,8 +136,8 @@ void task_glut()
 void task_net()
 {
 
-  std::vector<float> send_buf;
-  std::vector<float> recv_buf;
+  std::vector<uint32_t> send_buf;
+  std::vector<uint32_t> recv_buf;
   try
     {
       // Initialisation

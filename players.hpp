@@ -112,12 +112,12 @@ class Tetris
   int sx,sy;
   int level;
   bool gameover;
-  bool ispaused;
   std::vector< Joueur* > vJ;
  public:
   int moveMillis(){return 80;}
   int fallMillis(){return std::max(0,80-7*level);}
   
+  bool ispaused;
   bool isover(){return gameover;}
   bool iskeypressed(){return (nbh>0)&&(vJ[0]->iskeypressed());}
 

@@ -168,10 +168,10 @@ void Tetris::update()
   if (ispaused) return;
   int nbl;
   bool disp_scores=false;
-  bool go;
-  for(int j=0;j<nbj;j++)
+  bool bgame_over;
+  for(int j=0;j<nbh+nbIA;j++)
     {
-      vJ[j]->update(nbl,go);
+      vJ[j]->update(nbl,bgame_over);
       assert(nbl<5);
       if (nbl>0)
 	{
@@ -179,7 +179,7 @@ void Tetris::update()
 	  disp_scores=true;
 	  vJ[(j+1)%nbj]->T->addLines(4,nbl-1);
 	}
-      if(go)
+      if(bgame_over)
 	{
 	  std::cout<<"Partie terminée"<<std::endl;
 	  this->gameover=true;
@@ -315,14 +315,14 @@ void Tetris::get_data(std::vector<uint32_t>& buf) const
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    buf[3+n+y+(x+j*sx)*sy]=(*(vJ[j]->T))[x][y];
+	    buf[3+n+y+(x+j*sx)*sy]=vJ[j]->T->v[x][y];
 	  }
       // les pièces
       for(int i=0;i<16;i++)
 	{
 	  if (!vJ[j]->P->fshape(i)) continue;
-	  x=(i%4)+P->pos[0];
-	  y=(i/4)+P->pos[1];
+	  int x=(i%4)+vJ[j]->P->pos[0];
+	  int y=(i/4)+vJ[j]->P->pos[1];
 	  buf[3+n+y+(x+j*sx)*sy]=(vJ[j]->P->type+2);
 	}
     }
@@ -341,7 +341,7 @@ void Tetris::set_data(const std::vector<uint32_t>& buf)
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    (*(vJ[j]->T))[x][y]=buf[3+n+y+(x+j*sx)*sy];
+	    vJ[j]->T->v[x][y]=buf[3+n+y+(x+j*sx)*sy];
 	  }
     }
 }

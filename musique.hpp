@@ -4,8 +4,8 @@
 
  This example shows how to basic 3d positioning
 ===============================================================================================*/
-#include "build/api/inc/fmod.hpp"
-#include "build/api/inc/fmod_errors.h"
+#include "fmod_api/inc/fmod.hpp"
+#include "fmod_api/inc/fmod_errors.h"
 #include <stdio.h>
 #include <math.h>
 #include <iostream>

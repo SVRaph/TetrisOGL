@@ -8,7 +8,7 @@
 #include "musique.hpp"
 
 // Global variables
-Tetris GAME(12,16,1,0,1,3);
+Tetris GAME(12,16,1,1,0,3);
 glFenetre WIN; 
 Music MUSIQUE;
 
@@ -38,7 +38,10 @@ void gameTimer(int value) {
   k=(k+1)%7;
   GAME.command(true); // mouvement de l'IA
   if (k==0) GAME.update();
-  if (!GAME.isover()) glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  if (!GAME.isover())
+    glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  else 
+    glutDestroyWindow(glutGetWindow());
 }
 void moveTimer(int jou) {
   // pour la répétition des touches

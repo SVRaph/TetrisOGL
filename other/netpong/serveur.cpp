@@ -9,6 +9,8 @@ void task_game()
   GAME.bounds.resize(4,1.0f);
   GAME.bounds[0]=-1.0*RATIO;
   GAME.bounds[1]=+1.0*RATIO;
+  GAME.bounds[2]=-1.0;
+  GAME.bounds[3]=+1.0;
   while (keep_running)
     {
       GAME.update(0.08);

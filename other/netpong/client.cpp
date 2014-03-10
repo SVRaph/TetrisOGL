@@ -26,7 +26,7 @@ void reshape(GLsizei w, GLsizei h) {
  
 // Called back when the timer expired 
 void displayTimer(int value) {
-  GAME.update(WIN.refreshMillis*0.001);
+  //GAME.update(WIN.refreshMillis*0.001);
   GAME.keyboard();
   glutPostRedisplay();    // Post a paint request to activate display()
   glutTimerFunc(WIN.refreshMillis, displayTimer, 0); // subsequent timer call at milliseconds
@@ -130,7 +130,7 @@ void task_net()
 	  size_t len = socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
 	  GAME.client_set_data(recv_buf);
 
-	  msleep(100);
+	  msleep(20);
 	}
     }
   catch (std::exception& e)

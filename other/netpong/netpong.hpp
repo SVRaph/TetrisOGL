@@ -303,7 +303,7 @@ public:
     p[0]=recv_buf[0];
     p[1]=recv_buf[1];
     // si l'écart et inférieur à 1e-2s on ne touche à rien
-    if ( ((recv_buf[2]-bx)*(recv_buf[2]-bx)+(recv_buf[3]-by)*(recv_buf[3]-by)) > ((vx*vx+vy*vy)*1e-4) )
+    //if ( ((recv_buf[2]-bx)*(recv_buf[2]-bx)+(recv_buf[3]-by)*(recv_buf[3]-by)) > ((vx*vx+vy*vy)*1e-4) )
       {
 	bx  =recv_buf[2];
 	by  =recv_buf[3];

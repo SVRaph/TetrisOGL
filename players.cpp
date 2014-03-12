@@ -126,8 +126,13 @@ void IA::command()
 
 // --- Tetris --- // 
 
-Tetris::Tetris(int w,int h,int n1,int n2,int n3,int lv)
+void Tetris::init(int w,int h,int n1,int n2,int n3,int lv)
 {
+  for(int j=0;j<nbj;j++)
+    {
+      delete vJ[j];
+    }
+
   gameover=false;
   sx=w;
   sy=h;
@@ -213,7 +218,9 @@ void Tetris::command(bool ia)
 std::vector<float> Tetris::winBounds()
 {
   std::vector<float> v(4,0.0);
+  v[0]=0.0f;
   v[1]=(float)(sx*nbj);
+  v[2]=-7.0f;
   v[3]=(float)sy;
   return v;
 }
@@ -223,9 +230,15 @@ void Tetris::gldisplay()
   glPushMatrix();
   for(int j=0;j<nbj;j++)
     {
-      if (j>0) glTranslatef((float)sx,0.0f,0.0f);
-      if (j<nbh+nbIA) vJ[j]->P->gldisplay();
+      if (j<nbh+nbIA) 
+	{
+	  vJ[j]->P->gldisplay();
+	  glTranslatef(0.0f,(float)(-1*(sy+1)),0.0f);
+	  vJ[j]->Pnext->gldisplay();
+	  glTranslatef(0.0f,(float)(+1*(sy+1)),0.0f);
+	}
       vJ[j]->T->gldisplay();
+      glTranslatef((float)sx,0.0f,0.0f);
     }
   glPopMatrix();
 }

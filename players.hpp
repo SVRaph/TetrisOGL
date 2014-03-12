@@ -121,8 +121,9 @@ class Tetris
   bool isover(){return gameover;}
   bool iskeypressed(){return (nbh>0)&&(vJ[0]->iskeypressed());}
 
-  Tetris(int w,int h,int n1=1,int n2=1,int n3=0,int lv=1);
+  Tetris(): nbj(0){}
   ~Tetris();
+  void init(int w,int h,int n1,int n2,int n3,int lv);
   std::vector<float> winBounds();
   void gldisplay();
   void update();

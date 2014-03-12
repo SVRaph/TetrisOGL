@@ -45,6 +45,28 @@ public:
     // Compute aspect ratio of the new window
     if (h == 0) h = 1;                // To prevent divide by 0
     float aspect = (float)w / (float)h;
+    float ratio = (s[1]-s[0])/(s[3]-s[2]);
+
+    if (aspect >= ration) // window too large 
+      {
+	 // margin
+	float m=((s[3]-s[2])*aspect-(s[1]-s[0]))/2.0;
+	
+	xLeft   = s[0] - m;
+	xRight  = s[1] + m;
+	yBottom = s[2];
+	yTop    = s[3];
+      } 
+    else 
+      {
+	 // margin
+	float m=((s[1]-s[0])/aspect-(s[3]-s[2]))/2.0;
+
+	xLeft   = s[0];
+	xRight  = s[1];
+	yBottom = s[2];
+	yTop    = s[3] + 2.0*m;
+      }
 
     // Set the viewport to cover the new window
     glViewport(0, 0, w, h);
@@ -52,20 +74,6 @@ public:
     // Set the aspect ratio of the clipping area to match the viewport
     glMatrixMode(GL_PROJECTION); 
     glLoadIdentity();           
-    if (w >= h) 
-      {
-	xLeft   = s[0] * aspect;
-	xRight  = s[1] * aspect;
-	yBottom = s[2];
-	yTop    = s[3];
-      } 
-    else 
-      {
-	xLeft   = s[0];
-	xRight  = s[1];
-	yBottom = s[2] / aspect;
-	yTop    = s[3] / aspect;
-      }
     gluOrtho2D(xLeft, xRight, yBottom, yTop);
   }
 

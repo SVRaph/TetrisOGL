@@ -18,17 +18,18 @@
 #include <boost/asio.hpp>
 
 using boost::asio::ip::udp;
-const int PORT = 1313;
-const int BUFFER_LEN=3+1+12*16;
-
 
 void msleep(int ms){usleep(ms*1000);}
 
-// Global variables
+// Global parameters
+const int PORT = 1313;
+const int BUFFER_LEN=196;//=3+1*(1+12*16);
 std::string HOST_IP;
-bool keep_running=true;
+const bool STAND_ALONE=true;
 
-Tetris GAME(12,16,0,1,1,3);
+// Global variables
+bool keep_running=true;
+Tetris GAME;
 glFenetre WIN; 
 Music MUSIQUE;
 
@@ -58,7 +59,14 @@ void gameTimer(int value) {
   k=(k+1)%7;
   GAME.command(true); // mouvement de l'IA
   if (k==0) GAME.update();
-  if (!GAME.isover()) glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  if (!GAME.isover())
+    glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  else 
+    {
+      std::cout<<"Enter an int to quit"<<std::endl;
+      std::cin>>k;
+      glutDestroyWindow(glutGetWindow());
+    }
 }
 void moveTimer(int jou) {
   // pour la répétition des touches
@@ -124,7 +132,7 @@ void task_glut()
   // Register callback handler for ...
   glutReshapeFunc(reshape);          // ... window re-shape
   glutDisplayFunc(display);          // ... window re-paint
-  glutSpecialFunc(specialKeys); // ... special-key down event
+  glutSpecialFunc(specialKeys);      // ... special-key down event
   glutSpecialUpFunc(specialUpKeys);  // ... special-key up event
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
@@ -189,19 +197,29 @@ int main(int argc, char** argv) {
     {
       HOST_IP=argv[1];
     }
+  if (STAND_ALONE)
+    {
+      GAME.init(12,16,1,1,0,3);
+      MUSIQUE.load(0);
+      //MUSIQUE.play();
+      task_glut();
+    }
+  else
+    {
+      GAME.init(12,16,0,1,1,3);
 
- // Create and run threads
-  boost::thread thread_1 = boost::thread(task_glut);
-  boost::thread thread_2 = boost::thread(task_net);
-  
-  //do other stuff
-  MUSIQUE.load(0);
-  //MUSIQUE.play();
+      // Create and run threads
+      boost::thread thread_1 = boost::thread(task_glut);
+      boost::thread thread_2 = boost::thread(task_net);
 
-  // Join threads
-  thread_1.join();
-  thread_2.join();
-  
+      //do other stuff
+      MUSIQUE.load(0);
+      //MUSIQUE.play();
+
+      // Join threads
+      thread_1.join();
+      thread_2.join();
+    }
 
 
   return 0;

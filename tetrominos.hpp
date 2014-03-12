@@ -18,7 +18,7 @@ public:
   std::vector<int> pos;
   int type,rot;
 public:
-  Tetrominos(int type=0,int px=0,int py=0)
+  Tetrominos(int t=0,int px=0,int py=0)
   {
     assert(t<NBTETRO);
     type=t;

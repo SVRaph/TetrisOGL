@@ -47,7 +47,7 @@ public:
     float aspect = (float)w / (float)h;
     float ratio = (s[1]-s[0])/(s[3]-s[2]);
 
-    if (aspect >= ration) // window too large 
+    if (aspect >= ratio) // window too large 
       {
 	 // margin
 	float m=((s[3]-s[2])*aspect-(s[1]-s[0]))/2.0;

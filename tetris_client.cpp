@@ -1,4 +1,4 @@
-#include "glFenetre.h"
+#include "glFenetre.hpp"
 #include "players.hpp"
 #include "musique.hpp"
 
@@ -20,14 +20,15 @@
 using boost::asio::ip::udp;
 const int PORT = 1313;
 const int BUFFER_LEN=194;
-
+std::string HOST_IP;
 
 void msleep(int ms){usleep(ms*1000);}
 
-// Global variables
-std::string HOST_IP;
+// Global parameters
 bool keep_running=false;
+const bool STAND_ALONE=false;
 
+// Global variables
 Tetris GAME;
 glFenetre WIN; 
 Music MUSIQUE;
@@ -58,7 +59,14 @@ void gameTimer(int value) {
   k=(k+1)%7;
   GAME.command(true); // mouvement de l'IA
   if (k==0) GAME.update();
-  if (!GAME.isover()) glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  if (!GAME.isover())
+    glutTimerFunc(GAME.fallMillis(), gameTimer, 0);
+  else 
+    {
+      std::cout<<"Enter an int to quit"<<std::endl;
+      std::cin>>k;
+      glutDestroyWindow(glutGetWindow());
+    }
 }
 void moveTimer(int jou) {
   // pour la répétition des touches
@@ -124,7 +132,7 @@ void task_glut()
   // Register callback handler for ...
   glutReshapeFunc(reshape);          // ... window re-shape
   glutDisplayFunc(display);          // ... window re-paint
-  glutSpecialFunc(specialKeys); // ... special-key down event
+  glutSpecialFunc(specialKeys);      // ... special-key down event
   glutSpecialUpFunc(specialUpKeys);  // ... special-key up event
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
@@ -213,19 +221,27 @@ int main(int argc, char** argv) {
     {
       HOST_IP=argv[1];
     }
+  if (STAND_ALONE)
+    {
+      GAME.reinit(12,16,1,1,0,3);
+      MUSIQUE.load(0);
+      //MUSIQUE.play();
+      task_glut();
+    }
+  else
+    {
+      // Create and run threads
+      boost::thread thread_1 = boost::thread(task_glut);
+      boost::thread thread_2 = boost::thread(task_net);
 
- // Create and run threads
-  boost::thread thread_1 = boost::thread(task_glut);
-  boost::thread thread_2 = boost::thread(task_net);
-  
-  //do other stuff
-  MUSIQUE.load(0);
-  //MUSIQUE.play();
+      //do other stuff
+      MUSIQUE.load(0);
+      //MUSIQUE.play();
 
-  // Join threads
-  thread_1.join();
-  thread_2.join();
-  
+      // Join threads
+      thread_1.join();
+      thread_2.join();
+    }
 
 
   return 0;

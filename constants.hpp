@@ -18,6 +18,8 @@ void DrawCube5(float,float,uchar,uchar,uchar);
 void DrawCube3(float,float,int);
 inline float calcul_poly(const float s[5],float x1,float x2,float x3,float x4){ return (s[1]*x1+s[2]*x2+s[3]*x3+s[4]*x4);}
 
+
+
 const int NBTETRO=7;
 // L Z S G T I O
 const uchar COLOR[3*(NBTETRO+2)]=

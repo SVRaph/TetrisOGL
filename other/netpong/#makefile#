@@ -7,6 +7,8 @@ WARN = -Wno-deprecated
 CPPFLAGS= ${WARN} ${INCLUDE_PATH}
 LDFLAGS= #-L/usr/lib/ -L/usr/local/lib/
 
+
+
 all:	
 	${CC} ${CPPFLAGS} serveur.cpp -o pong_serveur ${LDFLAGS} ${LIBRARY}
 	${CC} ${CPPFLAGS} client.cpp -o pong_client  ${LDFLAGS} ${LIBRARY} ${LIBRARY_GL}	

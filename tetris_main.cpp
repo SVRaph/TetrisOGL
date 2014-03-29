@@ -1,14 +1,16 @@
 
 // g++ gl2d.cpp -lGL -lGLU -lglut
+// -- obsolete --
 
+ 
 #include <iostream>
  
-#include "glFenetre.h"
+#include "glFenetre.hpp"
 #include "players.hpp"
 #include "musique.hpp"
 
 // Global variables
-Tetris GAME(12,16,1,1,0,3);
+Tetris GAME;
 glFenetre WIN; 
 Music MUSIQUE;
 
@@ -100,7 +102,6 @@ void specialUpKeys(int key,int x,int y){
   GAME.keyboard(key,false);
 }
 
-
 // Main function: GLUT runs as a console application starting at main()
 int main(int argc, char** argv) {
 
@@ -108,10 +109,13 @@ int main(int argc, char** argv) {
   glutInit(&argc, argv);            // Initialize GLUT
   glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
   glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
-  glutInitWindowSize(WIN.width, WIN.height);  // Initial window width and height
-  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY); // Initial window top-left corner
-  glutCreateWindow(WIN.title);      // Create window with given title
-  if (WIN.fullScreenMode) glutFullScreen();             // Put into full screen
+
+
+  // Initialise and create window
+  glutInitWindowSize(WIN.width, WIN.height);
+  glutInitWindowPosition(WIN.windowPosX, WIN.windowPosY);
+  glutCreateWindow(WIN.title);                           
+  if (WIN.fullScreenMode) glutFullScreen(); 
 
   // Register callback handler for...
   glutDisplayFunc(display);     // ... window re-paint
@@ -128,6 +132,7 @@ int main(int argc, char** argv) {
   MUSIQUE.load(0);
   MUSIQUE.play();
 
+  GAME.reinit(12,16,1,1,0,3);
   glutMainLoop();               // Enter event-processing loop
   return 0;
 }

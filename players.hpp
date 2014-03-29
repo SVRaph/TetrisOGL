@@ -124,6 +124,7 @@ class Tetris
   Tetris(int w=0,int h=0,int n1=0,int n2=0,int n3=0,int lv=1);
   ~Tetris();
   void reinit(int w=12,int h=16,int n1=1,int n2=1,int n3=0,int lv=1);
+  
   std::vector<float> winBounds();
   void gldisplay();
   void update();

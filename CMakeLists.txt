@@ -13,12 +13,12 @@ find_library(FMOD NAMES libfmodex.so PATHS ${CMAKE_CURRENT_BINARY_DIR}/../fmod_a
 
 
 #stand alone
-add_executable(tetris constants.cpp gl2d.cpp tetrominos.cpp terrain.cpp players.cpp)
+add_executable(tetris tetris_main.cpp constants.cpp terrain.cpp players.cpp)
 target_link_libraries(tetris ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${FMOD})
 # Client - serveur
 add_executable(serveur tetris_serveur.cpp)
 target_link_libraries(serveur ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-add_executable(client  tetris_client.cpp constants.cpp tetrominos.cpp terrain.cpp players.cpp)
+add_executable(client  tetris_client.cpp constants.cpp terrain.cpp players.cpp)
 target_link_libraries(client ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${FMOD} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
 

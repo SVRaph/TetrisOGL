@@ -125,7 +125,6 @@ void IA::command()
 }
 
 // --- Tetris --- // 
-
 Tetris::Tetris(int w,int h,int n1,int n2,int n3,int lv)
 {
   gameover=false;
@@ -163,6 +162,42 @@ Tetris::~Tetris()
       delete vJ[j];
     }
 }
+void Tetris::reinit(int w,int h,int n1,int n2,int n3,int lv)
+{ 
+  for(int j=0;j<nbj;j++)
+    {
+      delete vJ[j];
+    }
+  gameover=false;
+  sx=w;
+  sy=h;
+  level=lv;
+
+  nbj=n1+n2+n3;
+  nbh=n1;
+  nbIA=n2;
+  nbnet=n3;
+
+  std::cout<<"Reinitialisation : "<<nbj<<std::endl;
+  vJ.resize(nbj,NULL);
+  int j=0;
+  for(;j<nbh;j++)
+    {
+      vJ[j]= new Human;
+      vJ[j]->init(w,h);
+    }
+  for(;j<nbh+nbIA;j++)
+    {
+      vJ[j]= new IA(level);
+      vJ[j]->init(w,h);
+    }
+  for(;j<nbj;j++)
+    {
+      vJ[j]= new Joueur;
+      vJ[j]->init(w,h);
+    }
+}
+  
 void Tetris::update()
 {
   if (ispaused) return;
@@ -302,20 +337,18 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 void Tetris::get_data(std::vector<uint32_t>& buf) const
 {
   int n=nbh+nbIA;  // nombre de joueurs en local
-  int len=3+n+n*sx*sy; // n,sx,sy,score1...scoren,[T1 (en col)],...,[Tn]
-  buf.resize(len,0);
-  buf[0]=n;
-  buf[1]=sx;
-  buf[2]=sy;
+  int len=1+n+n*sx*sy; // 2,score1...scoren,[T1 (en col)],...,[Tn]
+  assert(len<=buf.size()); // si il y a trop de joueurs par exemple
+  buf[0]=2;
   for(int j=0;j<n;j++)
     {
       //les scores
-      buf[3+j]=vJ[j]->score;
+      buf[1+j]=vJ[j]->score;
       // les terrains
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    buf[3+n+y+(x+j*sx)*sy]=vJ[j]->T->v[x][y];
+	    buf[1+n+y+(x+j*sx)*sy]=vJ[j]->T->v[x][y];
 	  }
       // les pièces
       for(int i=0;i<16;i++)
@@ -323,7 +356,7 @@ void Tetris::get_data(std::vector<uint32_t>& buf) const
 	  if (!vJ[j]->P->fshape(i)) continue;
 	  int x=(i%4)+vJ[j]->P->pos[0];
 	  int y=(i/4)+vJ[j]->P->pos[1];
-	  buf[3+n+y+(x+j*sx)*sy]=(vJ[j]->P->type+2);
+	  buf[1+n+y+(x+j*sx)*sy]=(vJ[j]->P->type+2);
 	}
     }
 }
@@ -332,16 +365,16 @@ void Tetris::get_data(std::vector<uint32_t>& buf) const
 void Tetris::set_data(const std::vector<uint32_t>& buf)
 {
   int n=nbnet; // nbre de joueurs distants
-  int len=3+n+n*sx*sy;
-  assert(n==buf[0] && sx==buf[1] && sy==buf[2] && len==buf.size());
+  int len=1+n+n*sx*sy;
+  assert(len<buf.size());
  
   for(int j=0;j<n;j++)
     {
-      vJ[nbh+nbIA+j]->score=buf[3+j];
+      vJ[nbh+nbIA+j]->score=buf[1+j];
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    vJ[nbh+nbIA+j]->T->v[x][y]=buf[3+n+y+(x+j*sx)*sy];
+	    vJ[nbh+nbIA+j]->T->v[x][y]=buf[1+n+y+(x+j*sx)*sy];
 	  }
     }
 }

@@ -19,16 +19,16 @@
 
 using boost::asio::ip::udp;
 const int PORT = 1313;
-const int BUFFER_LEN=3+1+12*16;
+const int BUFFER_LEN=194;
 
 
 void msleep(int ms){usleep(ms*1000);}
 
 // Global variables
 std::string HOST_IP;
-bool keep_running=true;
+bool keep_running=false;
 
-Tetris GAME(12,16,0,1,1,3);
+Tetris GAME;
 glFenetre WIN; 
 Music MUSIQUE;
 
@@ -128,6 +128,12 @@ void task_glut()
   glutSpecialUpFunc(specialUpKeys);  // ... special-key up event
   glutKeyboardFunc(keyboard);        // ... ascii key event
 
+  sleep(1);
+  while(!keep_running) 
+    {
+      std::cout<<"waiting server instruction..."<<std::endl;
+      sleep(1);
+    }
   glutTimerFunc(0, displayTimer, 0);   // First timer call immediately
   glutTimerFunc(0, gameTimer, 0);
   glutTimerFunc(0, moveTimer, 0);
@@ -140,32 +146,50 @@ void task_net()
 {
 
   std::vector<uint32_t> send_buf(BUFFER_LEN);
-  std::vector<uint32_t> recv_buf(BUFFER_LEN);
+  std::vector<uint32_t> recv_buf;
   try
     {
       // Initialisation
       boost::asio::io_service io_service;
       boost::asio::ip::address ip_recv = boost::asio::ip::address::from_string(HOST_IP);
       udp::endpoint receiver_endpoint(ip_recv,PORT);
+      udp::endpoint sender_endpoint;
       udp::socket socket(io_service);
       socket.open(udp::v4());
       std::cout<<"connect to "<<ip_recv.to_string()<<std::endl;
 
+      // Premiere connexion
+      send_buf[0]=1;
+      recv_buf.resize(4);
+      socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
+      socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+      
+
+      GAME.reinit(recv_buf[2],recv_buf[3],0,1,recv_buf[1]-1);
+      keep_running=true;
+
+      // Boucle principale
+      
+      recv_buf.resize((recv_buf[1]-1)*BUFFER_LEN+1);
       while(keep_running)
 	{
-	  GAME.get_data(send_buf);
+	  GAME.get_data(send_buf); // ne redimensionne pas
 	  socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
-
-	  udp::endpoint sender_endpoint;
-	  size_t len = socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+	  socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
 	  GAME.set_data(recv_buf);
-
 	  msleep(100);
 	}
+
+      // Derniere connexion
+      send_buf[0]=3;
+      recv_buf.resize(4);
+      socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
+      socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+      msleep(100);
     }
   catch (std::exception& e)
     {
-      std::cerr << e.what() << std::endl;
+      std::cerr << "Exception net task: "<<e.what() << std::endl;
     }
 }
 

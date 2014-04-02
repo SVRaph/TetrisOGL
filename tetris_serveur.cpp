@@ -7,8 +7,10 @@
 #include <boost/asio.hpp>
 
 using boost::asio::ip::udp;
+
 const int PORT = 1313;
-const int BUFFER_LEN=3+1+12*16;
+const int BUFFER_LEN=194; // =1+1(1+12*16)
+
 
 // la classe host représente 1 client
 struct Host
@@ -20,93 +22,131 @@ struct Host
 // la classe serveur contient les données envoyées par tous les clients
 class Server
 {
+  std::vector< bool > isFree;
   std::vector< Host > clients;
-  int sx,sy;
+  std::vector< uint32_t > params;
 public:
-  Server(int w,int h): sx(w),sy(h){}
-  int nb_clients(){return clients.size();}
-  void set_data(const std::vector<uint32_t>& buf,const udp::endpoint& remote)
+  Server(int n,int l,int h)
   {
-    int n=buf[0];
-    int len=3+n+n*sx*sy;
-    if (nb_clients()==0)
-      {
-	sx=buf[1];
-	sy=buf[2];
-      }
-
-    assert(sx==buf[1] && sy==buf[2] && len==buf.size());
-    bool found=false;
+    assert( (l*h) < BUFFER_LEN );
+    params.resize(4);
+    params[1]=n;
+    params[2]=l;
+    params[3]=h;
+    clients.resize(n);
+    for(int i=0;i<n;i++) clients[i].buffer.resize(len_data(),0);
+    isFree.resize(n+1,true);
+    std::cout<<"Serveur created. "<<n<<" clients maximum"<<std::endl;
+  }
+  int nb_clients(){return params[1];}
+  int len_data(){return BUFFER_LEN;}
+  int isKnown(const udp::endpoint& remote)
+  {
     for (int c=0;c<nb_clients();c++)
       {
-	if (remote==clients[c].remote_endpoint)
+	if (!isFree[c] && clients[c].remote_endpoint==remote)
+	  return c;
+      }
+    return -1;
+  }
+  int swap_data(const std::vector<uint32_t>& recv_buf,std::vector<uint32_t>& send_buf,const udp::endpoint& remote)
+  {
+    int flag=recv_buf[0];
+    int found=isKnown(remote);
+    // Nouvel arrivant
+    if (found<0 && flag==1)
+      {
+	// Reception
+	int c=0;
+	while (!isFree[c]) c++;
+	if (c>=nb_clients()) 
 	  {
-	    found=true;
-	    clients[c].buffer=buf;
+	    std::cout<<"Trop de clients"<<std::endl;
+	    return -1;
+	  }
+	clients[c].remote_endpoint=remote;
+	clients[c].buffer.resize(len_data(),0);
+	isFree[c]=false;
+	std::cout<<"New client: "<<c<<std::endl;
+
+	// Envoi - len=4
+	send_buf=params;
+	send_buf[0]=flag;
+      }
+    // Mise à jour d'un client
+    else if (found>=0 && flag==2)
+      {
+	// Reception
+	clients[found].buffer=recv_buf;
+	
+	// Envoi - len=(n-1)*BL+1
+	send_buf.resize((nb_clients()-1)*BUFFER_LEN+1);
+	send_buf[0]=flag;
+	int i=1;
+	for(int c=0;c<nb_clients();c++)
+	  {
+	    if (c==found) continue;
+	    for(int k=0;k<len_data();k++)
+	      {
+		send_buf[i]=clients[c].buffer[k];
+		i++;
+	      }
 	  }
       }
-    if(!found)
+    // Départ d'un client
+    else if (found>=0 && flag==3)
       {
-	Host h;
-	h.remote_endpoint=remote;
-	h.buffer=buf;
-	clients.push_back(h);
-	std::cout<<"New client"<<std::endl;
+	// Reception
+	isFree[found]=true;
+	std::cout<<"Client quit"<<std::endl;
+
+	// Envoi - len=4
+	send_buf.resize(4);
+	send_buf[0]=flag;
       }
-  }
-  void get_data(std::vector<uint32_t>& buf,const udp::endpoint& remote)
-  {
-    if (nb_clients()<2)
-      {
-	buf[0]=1;
-	buf[1]=sx;
-	buf[2]=sy;
-      }
-    else if (remote==clients[0].remote_endpoint) 
-      buf=clients[1].buffer;
-    else if (remote==clients[1].remote_endpoint) 
-      buf=clients[0].buffer;
+    // Autre
     else
       {
-	std::cout<<"More than 2 different clients: not implemented yet"<<std::endl;
-	buf[0]=1;
-	buf[1]=sx;
-	buf[2]=sy;
+	std::cerr<<"Strange data receive... [not implemented]"<<std::endl;
+	return -1;
       }
+    return flag;
   }
 };
-
 
 
 // Run the server
 int main(int argc, char** argv) 
 {
+  int n=3,l=12,h=16;
+
+  // Arguments
+
   // Global variables
-  Server SERVEUR(12,16);
+  Server SERVEUR(n,l,h);
   bool keep_running=true;
 
-  std::vector<uint32_t> send_buf;
-  std::vector<uint32_t> recv_buf;
   try
     {
       boost::asio::io_service io_service;
       udp::socket socket(io_service, udp::endpoint(udp::v4(), PORT));
   
-      std::vector<uint32_t> send_buf(BUFFER_LEN);
       std::vector<uint32_t> recv_buf(BUFFER_LEN);
+      std::vector<uint32_t> send_buf(4);
       udp::endpoint remote_endpoint;
 
       while(keep_running)
 	{
 	  boost::system::error_code error;
+	  
 	  socket.receive_from(boost::asio::buffer(recv_buf),
 			      remote_endpoint, 0, error);
 
 	  if (error && error != boost::asio::error::message_size)
 	    throw boost::system::system_error(error);
 
-	  SERVEUR.set_data(recv_buf,remote_endpoint);
-	  SERVEUR.get_data(send_buf,remote_endpoint);
+	  SERVEUR.swap_data(recv_buf,send_buf,remote_endpoint);
+
 
 	  boost::system::error_code ignored_error;
 	  socket.send_to(boost::asio::buffer(send_buf),

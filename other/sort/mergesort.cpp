@@ -165,7 +165,7 @@ void print_vector(vect& v)
 int main()
 {
   srand (time(NULL));
-  int N=10000;
+  int N=100000;
   int n=20;
 
   // Initialisation
@@ -187,7 +187,7 @@ int main()
 
   // Benchmark
 
-  int K=1000;
+  int K=100;
   clock_t begin_time,end_time;
 
   // c++-quicksort

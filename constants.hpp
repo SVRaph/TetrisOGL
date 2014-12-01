@@ -8,7 +8,7 @@
 
 const float INF=10000.0f;
 //rien, puits, nbre_trous, hauteur_pond, prof_trous
-const float STRAT[5]={0.0f,3.32657f,4.95295f,0.597845f,0.12753f};
+const float STRAT[5]={0.0f,3.3f,5.1f,0.60f,0.13f};
 const int SCORE[5]={0,1,3,5,10};
 
 typedef unsigned char uchar; // int between 0 and 255

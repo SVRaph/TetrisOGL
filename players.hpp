@@ -8,8 +8,17 @@
 #include "tetrominos.hpp"
 #include "terrain.hpp"
 
-
 #include <GL/glut.h>
+
+/*
+On définit ici :
+- une classe mère générique Joueurs
+- 2 classes filles 
+     - Human représentant un joueur humain
+     - IA représentant une IA
+*/
+
+
 
 const int KEYS[4]=
   {
@@ -30,7 +39,7 @@ bool isValid(const Tetrominos* P,const Terrain<I>* T)
       if (!P->fshape(i)) continue;
       xi=(i%4)+P->pos[0];
       yi=(i/4)+P->pos[1];
-      b = ( (xi>=0) && (yi >=0) && (xi<T->sx) && (yi<T->sy) && (T->v[xi][yi]==0) );
+      b = ( (xi>=0) && (yi >=0) && (xi<T->sx) && (yi<T->sy) && (!(bool)T->v[xi][yi]) );
     }
   return b;
 }

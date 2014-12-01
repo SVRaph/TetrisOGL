@@ -212,7 +212,7 @@ void Tetris::update()
 	{
 	  vJ[j]->score+=SCORE[nbl];
 	  disp_scores=true;
-	  vJ[(j+1)%nbj]->T->addLines(4,nbl-1);
+	  if(nbj>1) vJ[(j+1)%nbj]->T->addLines(4,nbl-1);
 	}
       if(bgame_over)
 	{
@@ -260,13 +260,10 @@ void Tetris::gldisplay()
   glPushMatrix();
   for(int j=0;j<nbj;j++)
     {
-      if (j<nbh+nbIA) 
-	{
-	  vJ[j]->P->gldisplay();
-	  glTranslatef(0.0f,(float)(-1*(sy+1)),0.0f);
-	  vJ[j]->Pnext->gldisplay();
-	  glTranslatef(0.0f,(float)(+1*(sy+1)),0.0f);
-	}
+      vJ[j]->P->gldisplay();
+      glTranslatef(0.0f,(float)(-1*(sy+1)),0.0f);
+      vJ[j]->Pnext->gldisplay();
+      glTranslatef(0.0f,(float)(+1*(sy+1)),0.0f);
       vJ[j]->T->gldisplay();
       glTranslatef((float)sx,0.0f,0.0f);
     }
@@ -296,9 +293,11 @@ float simulation(const GrilleIA& Gref, int type)
 	setPositionIA(&P,&G,x2,s2);
 
 	modif=apply(&P,&G,nbl);
-	if (!modif) continue; // ça bloque
-
-	m=std::min(m,G.score());	
+	if (modif) // ça ne bloque pas
+	  {
+	    float gsc=G.score();
+	    m=std::min(m,gsc);
+	  }
       }
   return m;
 }
@@ -326,6 +325,7 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 	modif = apply(&P,&G,nbl);
 	if (!modif) continue; // ça bloque
 	m=simulation(G,type2);
+
 	if (m<min) 
 	  {
 	    min=m;
@@ -333,6 +333,7 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 	    rmin=s1;
 	  }
       }
+  //std::cerr<<min<<" "<<xmin<<" "<<rmin<<std::endl;
   return min;
 }
 
@@ -344,46 +345,41 @@ float instructions(const Grille* pT,int type1,int type2,int& xmin, int& rmin)
 
 void Tetris::get_data(std::vector<uint32_t>& buf) const
 {
-  int n=nbh+nbIA;  // nombre de joueurs en local
-  int len=1+n+n*sx*sy; // 2,score1...scoren,[T1 (en col)],...,[Tn]
-  assert(len<=buf.size()); // si il y a trop de joueurs par exemple
   buf[0]=2;
-  for(int j=0;j<n;j++)
-    {
-      //les scores
-      buf[1+j]=vJ[j]->score;
-      // les terrains
-      for(int x=0;x<sx;x++)
-	for(int y=0;y<sy;y++)
-	  {
-	    buf[1+n+y+(x+j*sx)*sy]=vJ[j]->T->v[x][y];
-	  }
-      // les pièces
-      for(int i=0;i<16;i++)
-	{
-	  if (!vJ[j]->P->fshape(i)) continue;
-	  int x=(i%4)+vJ[j]->P->pos[0];
-	  int y=(i/4)+vJ[j]->P->pos[1];
-	  buf[1+n+y+(x+j*sx)*sy]=(vJ[j]->P->type+2);
-	}
-    }
+  int i=1;
+  // le terrain
+  for(int x=0;x<sx;x++)
+    for(int y=0;y<sy;y++)
+      {
+	buf[i++]=vJ[0]->T->v[x][y];
+      }
+  // la pièce
+  buf[i++]=vJ[0]->P->type;
+  buf[i++]=vJ[0]->P->pos[0];
+  buf[i++]=vJ[0]->P->pos[1];
+  buf[i++]=vJ[0]->P->rot;
+  buf[i++]=vJ[0]->Pnext->type;
 }
   
 // RQ : pas de réalocation mémoire
 void Tetris::set_data(const std::vector<uint32_t>& buf)
 {
-  int n=nbnet; // nbre de joueurs distants
-  int len=1+n+n*sx*sy;
-  assert(len<buf.size());
+  assert(1+nbnet*sx*sy < buf.size());
  
-  for(int j=0;j<n;j++)
+  int i=1;
+  for(int j=0;j<nbnet;j++)
     {
-      vJ[nbh+nbIA+j]->score=buf[1+j];
+      vJ[1+j]->score=0;
       for(int x=0;x<sx;x++)
 	for(int y=0;y<sy;y++)
 	  {
-	    vJ[nbh+nbIA+j]->T->v[x][y]=buf[1+n+y+(x+j*sx)*sy];
+	    vJ[1+j]->T->v[x][y]=buf[i++];
 	  }
+      vJ[1+j]->P->type  =buf[i++];
+      vJ[1+j]->P->pos[0]=buf[i++];
+      vJ[1+j]->P->pos[1]=buf[i++];
+      vJ[1+j]->P->rot   =buf[i++];
+      vJ[1+j]->Pnext->type   =buf[i++];
     }
 }
   

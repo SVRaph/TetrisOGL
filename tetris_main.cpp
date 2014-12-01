@@ -9,6 +9,8 @@
 #include "players.hpp"
 #include "musique.hpp"
 
+#include "arguments.hpp"
+
 // Global variables
 Tetris GAME;
 glFenetre WIN; 
@@ -46,7 +48,13 @@ void gameTimer(int value) {
     {
       std::cout<<"Enter an int to quit"<<std::endl;
       std::cin>>k;
-      glutDestroyWindow(glutGetWindow());
+      if (k==0)
+	glutDestroyWindow(glutGetWindow());
+      else
+	{
+	  GAME.reinit(12,16,0,1,0,7);
+	  glutTimerFunc(0, gameTimer, 0);
+	}
     }
 }
 void moveTimer(int jou) {
@@ -105,11 +113,17 @@ void specialUpKeys(int key,int x,int y){
 // Main function: GLUT runs as a console application starting at main()
 int main(int argc, char** argv) {
 
+  MUSIQUE.load(0);
+
+  Parameters P(argc,argv);
+  if (P.help) return 0;
+  if (P.music) MUSIQUE.play();
+  GAME.reinit(P.l,P.h,P.nhu,P.nia,P.nnt,P.lvl);
+
   srand(time(NULL));
   glutInit(&argc, argv);            // Initialize GLUT
   glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
   glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
-
 
   // Initialise and create window
   glutInitWindowSize(WIN.width, WIN.height);
@@ -129,10 +143,6 @@ int main(int argc, char** argv) {
   glutTimerFunc(0, gameTimer, 0);
   glutTimerFunc(0, moveTimer, 0);
 
-  MUSIQUE.load(0);
-  MUSIQUE.play();
-
-  GAME.reinit(12,16,1,1,0,3);
   glutMainLoop();               // Enter event-processing loop
   return 0;
 }

@@ -9,7 +9,14 @@
   |
   |
   |_____x
-  
+
+On définit ici :
+- une classe mère générique Terrain 
+- 2 classes filles 
+     - Grille représentant l'état d'une partie
+     - GrilleIA destinée à être utilisé pour réaliser les expériences des IA. 
+
+
 */
 
 

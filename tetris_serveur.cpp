@@ -6,10 +6,11 @@
 // Net
 #include <boost/asio.hpp>
 
+// Arguments
+#include "arguments.hpp"
+
 using boost::asio::ip::udp;
 
-const int PORT = 1313;
-const int BUFFER_LEN=194; // =1+1(1+12*16)
 
 
 // la classe host représente 1 client
@@ -24,22 +25,27 @@ class Server
 {
   std::vector< bool > isFree;
   std::vector< Host > clients;
-  std::vector< uint32_t > params;
+  std::vector< uint32_t > params; // .,n,l,h
 public:
   Server(int n,int l,int h)
   {
-    assert( (l*h) < BUFFER_LEN );
+    assert( 1+(n*l*h) < BUFFER_LEN );
     params.resize(4);
     params[1]=n;
     params[2]=l;
     params[3]=h;
     clients.resize(n);
-    for(int i=0;i<n;i++) clients[i].buffer.resize(len_data(),0);
+    for(int i=0;i<n;i++) 
+      clients[i].buffer.resize(BUFFER_LEN,0);
     isFree.resize(n+1,true);
+
+    assert( 1+(n*len_data()) < BUFFER_LEN );
     std::cout<<"Serveur created. "<<n<<" clients maximum"<<std::endl;
   }
+
   int nb_clients(){return params[1];}
-  int len_data(){return BUFFER_LEN;}
+  int len_data(){return 5+params[2]*params[3];}
+
   int isKnown(const udp::endpoint& remote)
   {
     for (int c=0;c<nb_clients();c++)
@@ -53,6 +59,7 @@ public:
   {
     int flag=recv_buf[0];
     int found=isKnown(remote);
+
     // Nouvel arrivant
     if (found<0 && flag==1)
       {
@@ -73,6 +80,7 @@ public:
 	send_buf=params;
 	send_buf[0]=flag;
       }
+
     // Mise à jour d'un client
     else if (found>=0 && flag==2)
       {
@@ -80,19 +88,19 @@ public:
 	clients[found].buffer=recv_buf;
 	
 	// Envoi - len=(n-1)*BL+1
-	send_buf.resize((nb_clients()-1)*BUFFER_LEN+1);
+	send_buf.resize(BUFFER_LEN);
 	send_buf[0]=flag;
 	int i=1;
 	for(int c=0;c<nb_clients();c++)
 	  {
-	    if (c==found) continue;
-	    for(int k=0;k<len_data();k++)
+	    if (c==found || isFree[c]) continue;
+	    for(int k=1;k<=len_data();k++)
 	      {
-		send_buf[i]=clients[c].buffer[k];
-		i++;
+		send_buf[i++]=clients[c].buffer[k];
 	      }
 	  }
       }
+
     // Départ d'un client
     else if (found>=0 && flag==3)
       {
@@ -104,6 +112,7 @@ public:
 	send_buf.resize(4);
 	send_buf[0]=flag;
       }
+
     // Autre
     else
       {
@@ -118,12 +127,12 @@ public:
 // Run the server
 int main(int argc, char** argv) 
 {
-  int n=3,l=12,h=16;
-
   // Arguments
+  Parameters P(argc,argv);
+  if (P.help) return 0;
 
   // Global variables
-  Server SERVEUR(n,l,h);
+  Server SERVEUR(P.nnt,P.l,P.h);
   bool keep_running=true;
 
   try
@@ -146,7 +155,6 @@ int main(int argc, char** argv)
 	    throw boost::system::system_error(error);
 
 	  SERVEUR.swap_data(recv_buf,send_buf,remote_endpoint);
-
 
 	  boost::system::error_code ignored_error;
 	  socket.send_to(boost::asio::buffer(send_buf),

@@ -17,16 +17,18 @@
 // Net
 #include <boost/asio.hpp>
 
+// Arguments
+#include "arguments.hpp"
+
+
 using boost::asio::ip::udp;
-const int PORT = 1313;
-const int BUFFER_LEN=194;
+
 std::string HOST_IP;
 
 void msleep(int ms){usleep(ms*1000);}
 
 // Global parameters
 bool keep_running=false;
-const bool STAND_ALONE=false;
 
 // Global variables
 Tetris GAME;
@@ -50,8 +52,15 @@ void reshape(GLsizei width, GLsizei height) {
  
 // Called back when the timer expired
 void displayTimer(int value) {
-  glutPostRedisplay();    // Post a paint request to activate display()
-  glutTimerFunc(WIN.refreshMillis, displayTimer, 0); // subsequent timer call
+  if (keep_running)
+    {
+      glutPostRedisplay();    // Post a paint request to activate display()
+      glutTimerFunc(WIN.refreshMillis, displayTimer, 0); // subsequent timer call
+    }
+  else
+    {
+      glutDestroyWindow(glutGetWindow());
+    }
 }
 void gameTimer(int value) {
   // pour les mvt autos : IA et descente
@@ -65,7 +74,7 @@ void gameTimer(int value) {
     {
       std::cout<<"Enter an int to quit"<<std::endl;
       std::cin>>k;
-      glutDestroyWindow(glutGetWindow());
+      keep_running=false;
     }
 }
 void moveTimer(int jou) {
@@ -81,8 +90,7 @@ void keyboard(unsigned char key, int x, int y) {
   switch (key) {
     // ESC key
   case 27:    
-    glutDestroyWindow(glutGetWindow());
-    exit(0);
+    keep_running=false;
     break;
     // P key
   case 80:
@@ -147,12 +155,11 @@ void task_glut()
   glutTimerFunc(0, moveTimer, 0);
 
   glutMainLoop();               // Enter event-processing loop
-  keep_running=false;
+
 }
 
-void task_net()
+void task_net(Parameters& P)
 {
-
   std::vector<uint32_t> send_buf(BUFFER_LEN);
   std::vector<uint32_t> recv_buf;
   try
@@ -165,20 +172,18 @@ void task_net()
       udp::socket socket(io_service);
       socket.open(udp::v4());
       std::cout<<"connect to "<<ip_recv.to_string()<<std::endl;
-
+      
       // Premiere connexion
       send_buf[0]=1;
       recv_buf.resize(4);
       socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
       socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
       
-
-      GAME.reinit(recv_buf[2],recv_buf[3],0,1,recv_buf[1]-1);
+      GAME.reinit(recv_buf[2],recv_buf[3],P.nhu,P.nia,recv_buf[1]-1);
       keep_running=true;
 
       // Boucle principale
-      
-      recv_buf.resize((recv_buf[1]-1)*BUFFER_LEN+1);
+      recv_buf.resize(BUFFER_LEN);
       while(keep_running)
 	{
 	  GAME.get_data(send_buf); // ne redimensionne pas
@@ -193,6 +198,7 @@ void task_net()
       recv_buf.resize(4);
       socket.send_to(boost::asio::buffer(send_buf), receiver_endpoint);
       socket.receive_from(boost::asio::buffer(recv_buf), sender_endpoint);
+      std::cout<<"Déconnexion\n";
       msleep(100);
     }
   catch (std::exception& e)
@@ -206,37 +212,39 @@ void task_net()
 // Main function: GLUT runs as a console application starting at main()
 int main(int argc, char** argv) {
 
+  MUSIQUE.load(0);
+
+  Parameters P(argc,argv);
+  if (P.help) return 0;
+  if (P.music) MUSIQUE.play();
+
   srand(time(NULL));
   glutInit(&argc, argv);            // Initialize GLUT
   glutInitDisplayMode(GLUT_DOUBLE); // Enable double buffered mode
   glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
 
-  if (argc < 2)
+  if (P.nnt==0) // Stand-alone
     {
-      std::cerr << "Usage: client <host=127.0.0.1>" << std::endl;
-      HOST_IP="127.0.0.1";
-      //return 1;
-    }
-  else
-    {
-      HOST_IP=argv[1];
-    }
-  if (STAND_ALONE)
-    {
-      GAME.reinit(12,16,1,1,0,3);
-      MUSIQUE.load(0);
-      //MUSIQUE.play();
+      GAME.reinit(P.l,P.h,P.nhu,P.nia,P.nnt,P.lvl);
+      keep_running=true;
       task_glut();
     }
   else
     {
+      if (P.nhu+P.nia != 1)
+	{
+	  std::cout<<"Le nombre de joueurs locaux d'une partie en réseaux et limité à 1 par client"<<std::endl;
+	  return 0;
+	}
+      HOST_IP=P.host_ip;
+
+
       // Create and run threads
       boost::thread thread_1 = boost::thread(task_glut);
-      boost::thread thread_2 = boost::thread(task_net);
+      boost::thread thread_2 = boost::thread(task_net,P);
 
-      //do other stuff
-      MUSIQUE.load(0);
-      //MUSIQUE.play();
+      // do other stuff
+      // ...
 
       // Join threads
       thread_1.join();

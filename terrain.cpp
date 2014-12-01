@@ -42,10 +42,10 @@ int GrilleIA::nbre_trous() const
 {
   int nb=0;
   bool ok=false;
-  for(int x=1;x<sx;x++)
+  for(int x=1;x<sx-1;x++)
     {
       ok=false;
-      for (int y=sy;y>1;y--)
+      for (int y=sy-1;y>0;y--)
 	{
 	  if (!ok &&  v[x][y]) ok=true;
 	  if ( ok && !v[x][y]) nb++;
@@ -61,7 +61,7 @@ int GrilleIA::puits() const
   int* hs=new int[sx];
   for (int x=0;x<sx;x++)
     {
-      for (int y=sy;y>0;y--)
+      for (int y=sy-1;y>=0;y--)
 	{
 	  if (v[x][y])
 	    {
@@ -98,10 +98,10 @@ int GrilleIA::prof_trous() const
     {
       ok=false;
       prof=0;
-      for (int y=sy;y>1;y--)
+      for (int y=sy-1;y>0;y--)
 	{
-	  if (!ok && v[x][y]) ok=true;
 	  if ( ok ) prof++;
+	  if (!ok && v[x][y]) ok=true;
 	  if ( ok && !v[x][y]) nb+=prof;
 	}
     }
